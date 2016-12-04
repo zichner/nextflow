@@ -19,6 +19,7 @@
  */
 
 package nextflow.util
+
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
@@ -37,7 +38,6 @@ import groovy.util.logging.Slf4j
 import nextflow.file.FileHelper
 import org.codehaus.groovy.runtime.GStringImpl
 import org.objenesis.instantiator.ObjectInstantiator
-
 /**
  * Helper class to get a {@code Kryo} object ready to be used
  */
@@ -242,29 +242,17 @@ class PathSerializer extends Serializer<Path> {
 
     @Override
     void write(Kryo kryo, Output output, Path target) {
-        final scheme = target.getFileSystem().provider().getScheme()
-        final path = target.toString()
-        log.trace "Path serialization > scheme: $scheme; path: $path"
-
-        output.writeString(scheme)
-        output.writeString(path)
+        final uri = target.toUri()
+        log.trace "Path serialization > $uri"
+        kryo.writeObject(output, uri)
     }
 
     @Override
     Path  read(Kryo kryo, Input input, Class<Path> type) {
-        final scheme = input.readString()
-        final path = input.readString()
-        log.trace "Path de-serialization > scheme: $scheme; path: $path"
-
-        if( "file".equalsIgnoreCase(scheme) ) {
-            return FileSystems.getDefault().getPath(path)
-        }
-
+        final uri = kryo.readObject(input, URI)
+        log.trace "Path de-serialization > $uri"
         // try to find provider
-        def uri = URI.create("$scheme://$path")
-        def fs = FileHelper.getOrCreateFileSystemFor(uri)
-        return fs.provider().getPath(uri)
-
+        uri.scheme == 'file' ? FileSystems.default.getPath(uri.path) : FileHelper.getOrCreateFileSystemFor(uri).provider().getPath(uri)
     }
 }
 

@@ -19,6 +19,7 @@
  */
 
 package nextflow.executor
+
 import groovy.transform.CompileStatic
 import groovy.transform.Memoized
 import groovy.util.logging.Slf4j
@@ -94,7 +95,7 @@ class IgConnector {
          * access to the Ignite file system to force the instantiation of a Ignite instance
          * if it is not already available
          */
-        def fs = FileHelper.getOrCreateFileSystemFor(URI.create('igfs:///'))
+        def fs = FileHelper.getOrCreateFileSystemFor(IgFileSystemProvider.SCHEME)
         grid = (fs.provider() as IgFileSystemProvider).getGrid()
 
         /*

@@ -246,6 +246,13 @@ class FileHelper {
         asPath(toPathURI(str))
     }
 
+    static private Pattern URI_PATTERN = Pattern.compile(/(^[a-zA-Z0-9]+):\/.*/)
+
+    static String getUriScheme( String path ) {
+        def m = URI_PATTERN.matcher(path)
+        m.matches() ? m.group(1) : null
+    }
+
 
     /**
      * Given a {@link URI} return a {@link Path} object
@@ -259,11 +266,8 @@ class FileHelper {
             checkFileURI(uri)
             return FileSystems.getDefault().getPath(uri.path)
         }
-        else if( uri.scheme == 'http' || uri.scheme == 'https' || uri.scheme == 'ftp' ) {
-            Paths.get(uri)
-        }
         else {
-            getOrCreateFileSystemFor(uri).provider().getPath(uri)
+            return getOrCreateFileSystemFor(uri).provider().getPath(uri)
         }
     }
 
@@ -584,6 +588,8 @@ class FileHelper {
         return fs
     }
 
+    // TODO to be removed
+    @Deprecated
     static FileSystem getOrCreateFileSystemFor( String scheme, Map env = null ) {
         getOrCreateFileSystemFor(URI.create("$scheme:///"), env)
     }
@@ -768,7 +774,8 @@ class FileHelper {
         return 0
     }
 
-
+    //TODO to be removed
+    @Deprecated
     static FileSystem fileSystemForScheme(String scheme) {
         ( !scheme
                 ? FileSystems.getDefault()

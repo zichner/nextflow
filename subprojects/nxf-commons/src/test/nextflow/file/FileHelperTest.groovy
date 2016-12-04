@@ -48,6 +48,22 @@ class FileHelperTest extends Specification {
         Files.createTempDirectory(tmp, 'test')
     }
 
+    def 'should get scheme from path' () {
+        expect:
+        FileHelper.getUriScheme(path) == scheme
+
+        where:
+        path                    | scheme
+        'http://foo.com'        | 'http'
+        'HTTP://foo.com'        | 'HTTP'
+        '://some.file'          | null
+        'file:///another'       | 'file'
+        'file://another'        | 'file'
+        'file:/relative'        | 'file'
+        'file:not/an/uri'       | null
+        'file/name:other/file'  | null
+
+    }
     def 'should return a Path object' () {
 
         expect:
