@@ -19,16 +19,16 @@
  */
 
 package nextflow.file
+
+import java.nio.file.FileSystem
+import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.util.regex.Pattern
-
-import groovy.transform.CompileStatic
 /**
  * Parse a file path to isolate the parent, file-name and whenever it contains a glob|regex pattern
  *
  * @author Paolo Di Tommaso <paolo.ditommaso@gmail.com>
  */
-@CompileStatic
 class FilePatternSplitter {
 
     static final public FilePatternSplitter GLOB = glob()
@@ -54,6 +54,10 @@ class FilePatternSplitter {
     private String parent
 
     private String fileName
+
+    private FileSystem fileSystem
+
+    FileSystem getFileSystem() { fileSystem }
 
     boolean isPattern() { pattern }
 
@@ -96,11 +100,13 @@ class FilePatternSplitter {
         // -- detected the file scheme if any
         int p = filePath.indexOf('://')
         if( p != -1 ) {
+            fileSystem = FileHelper.getOrCreateFileSystemFor(new URI(filePath))
             scheme = filePath.substring(0, p)
             filePath = filePath.substring(p+3)
         }
         else {
             scheme = null
+            fileSystem = FileSystems.default
         }
 
         //

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2013-2017, Centre for Genomic Regulation (CRG).
- * Copyright (c) 2013-2017, Paolo Di Tommaso and the respective authors.
+ * Copyright (c) 2013-2016, Centre for Genomic Regulation (CRG).
+ * Copyright (c) 2013-2016, Paolo Di Tommaso and the respective authors.
  *
  *   This file is part of 'Nextflow'.
  *
@@ -18,15 +18,27 @@
  *   along with Nextflow.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-include 'my-capsule'
-include 'nxf-commons'
-include 'nxf-dnanexus'
-include 'nxf-console'
-include 'nxf-drmaa'
-include 'nxf-ignite'
-include 'nxf-httpfs'
-include 'nxf-gcloud'
+package nextflow.file.gs
 
-rootProject.children.each { prj ->
-    prj.projectDir = new File("$rootDir/subprojects/$prj.name")
+import com.google.cloud.storage.Bucket
+import groovy.transform.CompileStatic
+
+/**
+ * Models attributes of a Google storage bucket
+ *
+ * @author Paolo Di Tommaso <paolo.ditommaso@gmail.com>
+ */
+@CompileStatic
+class GsBucketAttributes extends GsFileAttributes {
+
+    private String location
+
+    private String storageClass
+
+    GsBucketAttributes(Bucket bucket) {
+        super (bucket)
+        this.location = bucket.location
+        this.storageClass = bucket.storageClass
+    }
+
 }

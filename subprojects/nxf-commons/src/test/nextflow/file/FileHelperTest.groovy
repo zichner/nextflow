@@ -34,6 +34,8 @@ import nextflow.ISession
 import spock.lang.Specification
 
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS
+import spock.lang.Unroll
+
 /**
  *
  * @author Paolo Di Tommaso <paolo.ditommaso@gmail.com>
@@ -336,6 +338,26 @@ class FileHelperTest extends Specification {
 
         // any other return just the session
         FileHelper.envFor0('dxfs', env).session == sess
+
+    }
+
+    @Unroll
+    def 'get google cloud env config' () {
+
+        given:
+        def sess = Global.session = Mock(ISession)
+        sess.getConfig() >> [google:[credentials: cfg_file, projectId: cfg_project]]
+        def env = [:]
+        env.put('GOOGLE_PROJECT_ID',env_project)
+        env.put('GOOGLE_APPLICATION_CREDENTIALS',env_file)
+
+        expect:
+        FileHelper.envFor0('gs', env) == expected
+
+        where:
+        env_project | env_file  | cfg_project   | cfg_file      | expected
+        'foo-1'     | 'a.keys'  | null          | null          | [projectId:'foo-1', credentials: 'a.keys']
+        'bar-2'     | 'b.keys'  | 'xxx'         | 'data.key'    | [projectId: 'xxx', credentials: 'data.key']
 
     }
 

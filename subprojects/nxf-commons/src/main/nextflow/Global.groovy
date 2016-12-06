@@ -19,6 +19,8 @@
  */
 
 package nextflow
+
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -60,6 +62,41 @@ class Global {
      */
     static void setSession( ISession value ) {
         session = value
+    }
+
+    /**
+     * Retrieve the configuration object for Google Cloud
+     * @return
+     */
+    static Map<String,?> getGCloudConfig(Map env=null) {
+        getGCloudConfig0(session, env ?: System.getenv())
+    }
+
+    @PackageScope
+    static Map<String,?> getGCloudConfig0(ISession session, Map<String,String> env) {
+        def config = session.config.google
+        if( !(config instanceof Map) )
+            config = [:]
+
+        if( config.credentials && config.projectId ) {
+            return config
+        }
+
+        if( env['GOOGLE_APPLICATION_CREDENTIALS'] ) {
+            config.credentials = env['GOOGLE_APPLICATION_CREDENTIALS']
+        }
+        else if( env.containsKey('GCLOUD_SERVICE_KEY')) {
+            def bytes = env['GCLOUD_SERVICE_KEY'].decodeBase64()
+            def file = Files.createTempFile('gcloud-keys',null).toFile()
+            file.deleteOnExit()
+            file.text = new String(bytes)
+            config.credentials = file
+        }
+
+        if( env['GOOGLE_PROJECT_ID'] )
+            config.projectId = env['GOOGLE_PROJECT_ID']
+
+        return config
     }
 
     /**

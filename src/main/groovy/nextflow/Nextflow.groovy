@@ -102,12 +102,11 @@ class Nextflow {
 
     static private fileNamePattern( FilePatternSplitter splitter, Map opts, FileSystem fs ) {
 
-        final scheme = splitter.scheme
         final folder = splitter.parent
         final pattern = splitter.fileName
 
         if( !fs )
-            fs = FileHelper.fileSystemForScheme(scheme)
+            fs = splitter.fileSystem
 
         if( opts == null ) opts = [:]
         if( !opts.type ) opts.type = 'file'

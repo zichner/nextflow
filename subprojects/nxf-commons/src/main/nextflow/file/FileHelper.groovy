@@ -440,30 +440,38 @@ class FileHelper {
     @PackageScope
     static Map envFor0(String scheme, Map env) {
         def result = [:]
-        if( scheme?.toLowerCase() == 's3' ) {
+        switch( scheme?.toLowerCase() ) {
+            // Amazon AWS
+            case 's3':
+                List credentials = Global.getAwsCredentials(env)
+                if( credentials ) {
+                    // S3FS expect the access - secret keys pair in lower notation
+                    result.access_key = credentials[0]
+                    result.secret_key = credentials[1]
+                }
 
-            List credentials = Global.getAwsCredentials(env)
-            if( credentials ) {
-                // S3FS expect the access - secret keys pair in lower notation
-                result.access_key = credentials[0]
-                result.secret_key = credentials[1]
-            }
+                // AWS region
+                final region = Global.getAwsRegion()
+                if( region ) result.region = region
 
-            // AWS region
-            final region = Global.getAwsRegion()
-            if( region ) result.region = region
+                // -- remaining client config options
+                def config = Global.getAwsClientConfig()
+                if( config ) {
+                    result.putAll(config)
+                }
 
-            // -- remaining client config options
-            def config = Global.getAwsClientConfig()
-            if( config ) {
-                result.putAll(config)
-            }
+                log.debug "AWS S3 config details: ${dumpAwsConfig(result)}"
+                break
 
-            log.debug "AWS S3 config details: ${dumpAwsConfig(result)}"
-        }
-        else {
-            assert Global.session, "Session is not available -- make sure to call this after Session object has been created"
-            result.session = Global.session
+            // -- Google Storage
+            case 'gs':
+                result.putAll( Global.getGCloudConfig(env) )
+                log.debug "Google Cloud config details: $result"
+                break
+
+            default:
+                assert Global.session, "Session is not available -- make sure to call this after Session object has been created"
+                result.session = Global.session
         }
         return result
     }

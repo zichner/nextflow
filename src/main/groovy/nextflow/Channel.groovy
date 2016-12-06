@@ -199,8 +199,7 @@ class Channel  {
 
         // split the folder and the pattern
         final splitter = FilePatternSplitter.regex().parse(filePattern.toString())
-        final fs = FileHelper.fileSystemForScheme(splitter.scheme)
-        pathImpl( 'regex', splitter.parent, splitter.fileName, opts, fs )
+        pathImpl( 'regex', splitter.parent, splitter.fileName, opts, splitter.fileSystem )
     }
 
 
@@ -368,8 +367,7 @@ class Channel  {
         assert filePattern
         // split the folder and the pattern
         final splitter = FilePatternSplitter.regex().parse(filePattern.toString())
-        def fs = FileHelper.fileSystemForScheme(splitter.scheme)
-        def result = watchImpl( 'regex', splitter.parent, splitter.fileName, false, events, fs )
+        def result = watchImpl( 'regex', splitter.parent, splitter.fileName, false, events, splitter.fileSystem )
 
         session.dag.addSourceNode('Channel.watchPath', result)
         return result
@@ -394,7 +392,7 @@ class Channel  {
     static DataflowChannel<Path> watchPath( String filePattern, String events = 'create' ) {
 
         final splitter = FilePatternSplitter.regex().parse(filePattern.toString())
-        final fs = FileHelper.fileSystemForScheme(splitter.scheme)
+        final fs = splitter.fileSystem
         final folder = splitter.parent
         final pattern = splitter.fileName
         def result = watchImpl('glob', folder, pattern, pattern.startsWith('*'), events, fs)

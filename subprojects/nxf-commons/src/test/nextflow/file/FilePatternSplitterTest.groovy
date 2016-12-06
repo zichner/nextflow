@@ -20,9 +20,11 @@
 
 package nextflow.file
 
+import java.nio.file.FileSystem
+import java.nio.file.FileSystems
+
 import spock.lang.Specification
 import spock.lang.Unroll
-
 /**
  *
  * @author Paolo Di Tommaso <paolo.ditommaso@gmail.com>
@@ -186,5 +188,26 @@ class FilePatternSplitterTest extends Specification {
         'hello\\[a-b\\]'| 'hello\\Xa-b\\X'
     }
 
+    def 'should return the associated file system' () {
+        given:
+        def s3_fs = Mock(FileSystem)
+        and:
+        GroovyMock(FileHelper, global: true)
+
+        when:
+        def parser = FilePatternSplitter.glob().parse('s3://bucket/a/b')
+        then:
+        1 * FileHelper.getOrCreateFileSystemFor(_) >> { s3_fs }
+        parser.scheme == 's3'
+        parser.fileSystem == s3_fs
+
+        when:
+        parser = FilePatternSplitter.glob().parse('/foo/bar')
+        then:
+        0 * FileHelper.getOrCreateFileSystemFor(_)
+        parser.scheme == null
+        parser.fileSystem == FileSystems.default
+
+    }
 
 }

@@ -102,4 +102,23 @@ class GlobalTest extends Specification {
     }
 
 
+    def 'should return a google cloud config object' () {
+        given:
+        def session
+        session = Mock(ISession)
+        session.getConfig() >> [google: [projectId: cfg_prj, credentials: cfg_file]]
+
+        when:
+        def config = Global.getGCloudConfig0(session, [GOOGLE_PROJECT_ID: env_prj, GOOGLE_APPLICATION_CREDENTIALS: env_file])
+        then:
+        config.credentials == expected.credentials
+        config.projectId == expected.projectId
+
+        where:
+        env_prj     | env_file  | cfg_prj   | cfg_file      | expected
+        'foo-1'     | 'a.keys'  | null      | null          | [projectId:'foo-1', credentials: 'a.keys']
+        'bar-2'     | 'b.keys'  | 'xxx'     | 'data.key'    | [projectId: 'xxx', credentials: 'data.key']
+
+    }
+
 }
