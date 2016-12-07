@@ -22,6 +22,7 @@ Contents:
    awscloud
    amazons3
    dnanexus
+   gcloud
    docker
    singularity
    ignite
