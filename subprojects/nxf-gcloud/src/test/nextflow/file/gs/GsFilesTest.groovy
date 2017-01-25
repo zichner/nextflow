@@ -124,7 +124,7 @@ class GsFilesTest extends Specification implements StorageHelper {
         attrs.size() == 12
         !attrs.isSymbolicLink()
         !attrs.isOther()
-        attrs.fileKey() == keyName
+        attrs.fileKey() == "/$keyName"
         attrs.lastAccessTime() == null
         attrs.lastModifiedTime().toMillis()-start < 5_000
         attrs.creationTime().toMillis()-start < 5_000
@@ -172,7 +172,7 @@ class GsFilesTest extends Specification implements StorageHelper {
         attrs.size() == 0
         !attrs.isSymbolicLink()
         !attrs.isOther()
-        attrs.fileKey() == bucketName
+        attrs.fileKey() == "/$bucketName"
         attrs.creationTime().toMillis()-start < 5_000
         attrs.lastAccessTime() == null
         attrs.lastModifiedTime() == null
