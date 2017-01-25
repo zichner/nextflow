@@ -53,6 +53,7 @@ class KryoHelper {
         serializers = [:]
         serializers.put( PATH_CLASS, PathSerializer )
         serializers.put( URL, URLSerializer )
+        serializers.put( URI, URISerializer )
         serializers.put( UUID, UUIDSerializer )
         serializers.put( File, FileSerializer )
         serializers.put( S3Path, PathSerializer )
@@ -242,17 +243,26 @@ class PathSerializer extends Serializer<Path> {
 
     @Override
     void write(Kryo kryo, Output output, Path target) {
-        final uri = target.toUri()
-        log.trace "Path serialization > $uri"
-        kryo.writeObject(output, uri)
+        final scheme = target.getFileSystem().provider().getScheme()
+        log.trace "Path serialization > scheme: $scheme; path: $target"
+
+        final path = scheme=='file' ? target.toString() : target.toUri().toString()
+        output.writeString(scheme)
+        output.writeString(path)
     }
 
     @Override
-    Path  read(Kryo kryo, Input input, Class<Path> type) {
-        final uri = kryo.readObject(input, URI)
-        log.trace "Path de-serialization > $uri"
+    Path read(Kryo kryo, Input input, Class<Path> type) {
+        final scheme = input.readString()
+        final path = input.readString()
+        log.trace "Path de-serialization > scheme: $scheme; path: $path"
+
         // try to find provider
-        uri.scheme == 'file' ? FileSystems.default.getPath(uri.path) : FileHelper.getOrCreateFileSystemFor(uri).provider().getPath(uri)
+        if( scheme == 'file' )
+            return FileSystems.default.getPath(path)
+
+        final uri = new URI(path)
+        return FileHelper.getOrCreateFileSystemFor(uri).provider().getPath(uri)
     }
 }
 
@@ -282,6 +292,22 @@ class GStringSerializer extends Serializer<GString> {
     }
 }
 
+@Slf4j
+@CompileStatic
+class URISerializer extends Serializer<URI> {
+
+    @Override
+    void write(Kryo kryo, Output output, URI uri) {
+        log.trace "URI serialization > $uri"
+        output.writeString(uri.toString())
+    }
+
+    @Override
+    URI read(Kryo kryo, Input input, Class<URI> type) {
+        log.trace "URI de-serialization"
+        return new URI(input.readString())
+    }
+}
 
 @Slf4j
 @CompileStatic

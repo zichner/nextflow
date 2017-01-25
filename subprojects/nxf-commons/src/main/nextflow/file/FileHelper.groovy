@@ -782,14 +782,6 @@ class FileHelper {
         return 0
     }
 
-    //TODO to be removed
-    @Deprecated
-    static FileSystem fileSystemForScheme(String scheme) {
-        ( !scheme
-                ? FileSystems.getDefault()
-                : getOrCreateFileSystemFor(scheme) )
-    }
-
     /**
      * Move a path to a target destination. It handles file or directory both to a local
      * or to a foreign file system

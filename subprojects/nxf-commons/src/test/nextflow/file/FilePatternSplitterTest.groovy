@@ -81,6 +81,7 @@ class FilePatternSplitterTest extends Specification {
     @Unroll
     def 'should split path components for: #str' () {
         given:
+        GroovyMock(FileHelper, global: true)
         def parser = FilePatternSplitter.glob()
 
         when:
