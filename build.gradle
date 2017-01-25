@@ -55,7 +55,7 @@ ext {
 allprojects {
     apply plugin: 'java'
 
-    version = '0.23.4'
+    version = '0.24.0-SNAPSHOT'
     group = 'io.nextflow'
 
     sourceCompatibility = 1.7
@@ -105,7 +105,6 @@ configurations {
     dnanexus.extendsFrom runtime
     ignite.extendsFrom runtime
     console.extendsFrom runtime
-    gcloud.extendsFrom runtime
     gdocLibs.extendsFrom runtime
 }
 
@@ -166,10 +165,6 @@ dependencies {
         exclude module: 'nextflow'
     }
 
-    gcloud(project(':nxf-gcloud')) {
-        exclude module: 'nextflow'
-    }
-    
     // Documentation required libraries
     gdocLibs 'org.fusesource.jansi:jansi:1.11'
     gdocLibs "org.codehaus.groovy:groovy-groovydoc:2.4.9"
@@ -388,7 +383,6 @@ task packAll(type: Jar) {
 
     from jar // embed our application jar
     from (configurations.ignite)
-    from (configurations.gcloud)
     from (configurations.capsule.collect { zipTree(it) })
 
     manifest.attributes( 'Main-Class'        : 'CapsuleLoader',
@@ -581,7 +575,7 @@ task exportClasspath {
     dependsOn configurations.ignite, configurations.console
 
     def home = System.getProperty('user.home')
-    def all = configurations.ignite + configurations.gcloud + configurations.console
+    def all = configurations.ignite + configurations.console
     def libs = all.collect { File file -> /* println file.canonicalPath.replace(home, '$HOME'); */ file.canonicalPath;  }
     new File('.launch.classpath').text = libs.join(':')
 }
