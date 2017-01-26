@@ -522,7 +522,7 @@ class FileHelper {
      * Get the instance of the specified {@code FileSystemProvider} class. If the provider is not
      * in the list of installed provided, it creates a new instance and add it to the list
      * <p>
-     * This method has been deprecated use {@link #getOrCreateFileSystemFor(java.lang.String)} instead
+     * This method has been deprecated use {@link #getOrCreateFileSystemForScheme(java.lang.String)} instead
      *
      * @see {@code FileSystemProvider#installedProviders}
      *
@@ -596,9 +596,13 @@ class FileHelper {
         return fs
     }
 
+    static FileSystem getOrCreateFileSystemFor( String uri, Map env = null ) {
+        getOrCreateFileSystemFor(toPathURI(uri), env)
+    }
+
     // TODO to be removed
     @Deprecated
-    static FileSystem getOrCreateFileSystemFor( String scheme, Map env = null ) {
+    static FileSystem getOrCreateFileSystemForScheme( String scheme, Map env = null ) {
         getOrCreateFileSystemFor(URI.create("$scheme:///"), env)
     }
 

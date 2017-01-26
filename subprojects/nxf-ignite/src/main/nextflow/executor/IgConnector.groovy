@@ -95,7 +95,7 @@ class IgConnector {
          * access to the Ignite file system to force the instantiation of a Ignite instance
          * if it is not already available
          */
-        def fs = FileHelper.getOrCreateFileSystemFor(IgFileSystemProvider.SCHEME)
+        def fs = FileHelper.getOrCreateFileSystemForScheme(IgFileSystemProvider.SCHEME)
         grid = (fs.provider() as IgFileSystemProvider).getGrid()
 
         /*

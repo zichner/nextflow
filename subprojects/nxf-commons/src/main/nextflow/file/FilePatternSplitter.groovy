@@ -100,7 +100,7 @@ class FilePatternSplitter {
         // -- detected the file scheme if any
         int p = filePath.indexOf('://')
         if( p != -1 ) {
-            fileSystem = FileHelper.getOrCreateFileSystemFor(new URI(filePath))
+            fileSystem = FileHelper.getOrCreateFileSystemFor(filePath)
             scheme = filePath.substring(0, p)
             filePath = filePath.substring(p+3)
         }

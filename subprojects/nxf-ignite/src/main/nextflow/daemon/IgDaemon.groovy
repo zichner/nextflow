@@ -61,7 +61,7 @@ class IgDaemon implements DaemonLauncher {
          * configure the file system
          */
         log.debug "Configuring Apache Ignite file system"
-        FileHelper.getOrCreateFileSystemFor(IgFileSystemProvider.SCHEME, [grid: grid])
+        FileHelper.getOrCreateFileSystemForScheme(IgFileSystemProvider.SCHEME, [grid: grid])
 
         /*
          * Scheduler agent
