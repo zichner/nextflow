@@ -20,15 +20,16 @@
 
 package nextflow.file
 
-import java.nio.file.FileSystem
-import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.util.regex.Pattern
+
+import groovy.transform.CompileStatic
 /**
  * Parse a file path to isolate the parent, file-name and whenever it contains a glob|regex pattern
  *
  * @author Paolo Di Tommaso <paolo.ditommaso@gmail.com>
  */
+@CompileStatic
 class FilePatternSplitter {
 
     static final public FilePatternSplitter GLOB = glob()
@@ -49,23 +50,15 @@ class FilePatternSplitter {
 
     private final Syntax syntax
 
-    private String scheme
-
-    private String parent
+    private String folder
 
     private String fileName
-
-    private FileSystem fileSystem
-
-    FileSystem getFileSystem() { fileSystem }
 
     boolean isPattern() { pattern }
 
     String getFileName() { fileName }
 
-    String getParent() { parent }
-
-    String getScheme() { scheme }
+    String getFolder() { folder }
 
     static FilePatternSplitter glob() { new FilePatternSplitter(Syntax.GLOB) }
 
@@ -96,19 +89,8 @@ class FilePatternSplitter {
      * @param filePath The file path string to parse
      * @return
      */
-    FilePatternSplitter parse(String filePath) {
-        // -- detected the file scheme if any
-        int p = filePath.indexOf('://')
-        if( p != -1 ) {
-            fileSystem = FileHelper.getOrCreateFileSystemFor(filePath)
-            scheme = filePath.substring(0, p)
-            filePath = filePath.substring(p+3)
-        }
-        else {
-            scheme = null
-            fileSystem = FileSystems.default
-        }
 
+    FilePatternSplitter parse( String filePath ) {
         //
         // split the path in two components
         // - folder: the part not containing meta characters
@@ -116,7 +98,7 @@ class FilePatternSplitter {
 
         boolean found
         String norm = replaceMetaChars(filePath)
-        p = firstMetaIndex(norm)
+        int p = firstMetaIndex(norm)
 
         if( p == -1 ) {
             // find the last SLASH
@@ -137,12 +119,12 @@ class FilePatternSplitter {
         }
 
         if( p == -1 ) {
-            parent = './'
+            folder = './'
             fileName = filePath
             pattern = found && pairedBrackets(norm)
         }
         else {
-            parent = strip(filePath.substring(0,p+1))
+            folder = strip(filePath.substring(0,p+1))
             fileName = filePath.substring(p+1)
             pattern = found && pairedBrackets(norm)
         }

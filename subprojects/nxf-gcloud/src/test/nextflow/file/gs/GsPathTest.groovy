@@ -210,10 +210,13 @@ class GsPathTest extends Specification {
     }
 
     @Unroll
-    def 'should validate toUri'() {
+    def 'should validate toUri: #uri'() {
 
         expect:
         getPath(path).toUri() == new URI(uri)
+        getPath(path).toUri().scheme == new URI(uri).scheme
+        getPath(path).toUri().authority == new URI(uri).authority
+        getPath(path).toUri().path == new URI(uri).path
 
         where:
         path                            | uri

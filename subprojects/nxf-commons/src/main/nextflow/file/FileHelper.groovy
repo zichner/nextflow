@@ -465,7 +465,7 @@ class FileHelper {
 
             // -- Google Storage
             case 'gs':
-                result.putAll( Global.getGCloudConfig(env) )
+                result.putAll( Global.getGcpConfig(env) )
                 log.debug "Google Cloud config details: $result"
                 break
 
@@ -706,7 +706,6 @@ class FileHelper {
         return matcher
     }
 
-
     /**
      * Applies the specified action on one or more files and directories matching the specified glob pattern
      *
@@ -919,6 +918,16 @@ class FileHelper {
             log.trace "Unable to read attributes for file: $path"
             return null
         }
+    }
+
+    static String toQualifiedPathString( path ) {
+        if( path == null )
+            return null
+
+        if( path instanceof Path )
+            return path.fileSystem == FileSystems.default ? path.toString() : path.toUri().toString()
+
+        return path.toString()
     }
 
 }

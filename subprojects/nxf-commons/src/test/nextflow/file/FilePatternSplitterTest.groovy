@@ -20,9 +20,6 @@
 
 package nextflow.file
 
-import java.nio.file.FileSystem
-import java.nio.file.FileSystems
-
 import spock.lang.Specification
 import spock.lang.Unroll
 /**
@@ -81,44 +78,42 @@ class FilePatternSplitterTest extends Specification {
     @Unroll
     def 'should split path components for: #str' () {
         given:
-        GroovyMock(FileHelper, global: true)
         def parser = FilePatternSplitter.glob()
 
         when:
         parser.parse(str)
         then:
-        parser.parent == folder
+        parser.folder == folder
         parser.fileName == pattern
-        parser.scheme == scheme
 
         where:
-        str                                     | folder            | pattern               | scheme
-        '/some/file/name.txt'                   | '/some/file/'     | 'name.txt'            | null
-        '/some/file/na*.txt'                    | '/some/file/'     | 'na*.txt'             | null
-        '/some/file/na??.txt'                   | '/some/file/'     | 'na??.txt'            | null
-        '/some/file/*.txt'                      | '/some/file/'     | '*.txt'               | null
-        '/some/file/?.txt'                      | '/some/file/'     | '?.txt'               | null
-        '/some/file/*'                          | '/some/file/'     | '*'                   | null
-        '/some/file/'                           | '/some/file/'     | ''                    | null
-        'path/filename.txt'                     | 'path/'           | 'filename.txt'        | null
-        'filename.txt'                          | './'              | 'filename.txt'        | null
-        './file.txt'                            | './'              | 'file.txt'            | null
-        '/some/file/**/*.txt'                   | '/some/file/'     | '**/*.txt'            | null
-        'dxfs:///some/file/**/*.txt'            | '/some/file/'     | '**/*.txt'            | 'dxfs'
-        'dxfs://some/file/**/*.txt'             | 'some/file/'      | '**/*.txt'            | 'dxfs'
-        'dxfs://*.txt'                          | './'              | '*.txt'               | 'dxfs'
-        'dxfs:///*.txt'                         | '/'               | '*.txt'               | 'dxfs'
-        'dxfs:///**/*.txt'                      | '/'               | '**/*.txt'            | 'dxfs'
-        'file{a,b}'                             | './'              | 'file{a,b}'           | null
-        'test/data/file{a,b}'                   | 'test/data/'      | 'file{a,b}'           | null
-        'test/{file1,file2}'                    | 'test/'           | '{file1,file2}'       | null
-        '{file1,file2}'                         | './'              | '{file1,file2}'       | null
-        '{test/file1,data/file2}'               | './'              | '{test/file1,data/file2}' | null
-        'data/{p/file1,q/file2}'                | 'data/'           | '{p/file1,q/file2}'   | null
-        'data/{p,q}/file'                       | 'data/'           | '{p,q}/file'          | null
-        'test/data/file[a-b]'                   | 'test/data/'      | 'file[a-b]'           | null
-        'test/data[a-b]/file'                   | 'test/'           | 'data[a-b]/file'      | null
-        '/some/path\\[a-b\\]/data{a,b}/file\\?' | '/some/path[a-b]/'| 'data{a,b}/file\\?'   | null
+        str                                     | folder                    | pattern
+        '/some/file/name.txt'                   | '/some/file/'             | 'name.txt'
+        '/some/file/na*.txt'                    | '/some/file/'             | 'na*.txt'
+        '/some/file/na??.txt'                   | '/some/file/'             | 'na??.txt'
+        '/some/file/*.txt'                      | '/some/file/'             | '*.txt'
+        '/some/file/?.txt'                      | '/some/file/'             | '?.txt'
+        '/some/file/*'                          | '/some/file/'             | '*'
+        '/some/file/'                           | '/some/file/'             | ''
+        'path/filename.txt'                     | 'path/'                   | 'filename.txt'
+        'filename.txt'                          | './'                      | 'filename.txt'
+        './file.txt'                            | './'                      | 'file.txt'
+        '/some/file/**/*.txt'                   | '/some/file/'             | '**/*.txt'
+        'dxfs:///some/file/**/*.txt'            | 'dxfs:///some/file/'      | '**/*.txt'
+        'dxfs://some/file/**/*.txt'             | 'dxfs://some/file/'       | '**/*.txt'
+        'dxfs://*.txt'                          | 'dxfs://'                 | '*.txt'
+        'dxfs:///*.txt'                         | 'dxfs:///'                | '*.txt'
+        'dxfs:///**/*.txt'                      | 'dxfs:///'                | '**/*.txt'
+        'file{a,b}'                             | './'                      | 'file{a,b}'
+        'test/data/file{a,b}'                   | 'test/data/'              | 'file{a,b}'
+        'test/{file1,file2}'                    | 'test/'                   | '{file1,file2}'
+        '{file1,file2}'                         | './'                      | '{file1,file2}'
+        '{test/file1,data/file2}'               | './'                      | '{test/file1,data/file2}'
+        'data/{p/file1,q/file2}'                | 'data/'                   | '{p/file1,q/file2}'
+        'data/{p,q}/file'                       | 'data/'                   | '{p,q}/file'
+        'test/data/file[a-b]'                   | 'test/data/'              | 'file[a-b]'
+        'test/data[a-b]/file'                   | 'test/'                   | 'data[a-b]/file'
+        '/some/path\\[a-b\\]/data{a,b}/file\\?' | '/some/path[a-b]/'        | 'data{a,b}/file\\?'
 
     }
 
@@ -187,28 +182,6 @@ class FilePatternSplitterTest extends Specification {
         'hell?-*'       | 'hell?-*'
         '\\*ello??'     | '\\Xello??'
         'hello\\[a-b\\]'| 'hello\\Xa-b\\X'
-    }
-
-    def 'should return the associated file system' () {
-        given:
-        def s3_fs = Mock(FileSystem)
-        and:
-        GroovyMock(FileHelper, global: true)
-
-        when:
-        def parser = FilePatternSplitter.glob().parse('s3://bucket/a/b')
-        then:
-        1 * FileHelper.getOrCreateFileSystemFor(_) >> { s3_fs }
-        parser.scheme == 's3'
-        parser.fileSystem == s3_fs
-
-        when:
-        parser = FilePatternSplitter.glob().parse('/foo/bar')
-        then:
-        0 * FileHelper.getOrCreateFileSystemFor(_)
-        parser.scheme == null
-        parser.fileSystem == FileSystems.default
-
     }
 
 }

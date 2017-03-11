@@ -19,15 +19,24 @@
  */
 
 package nextflow.cli
+
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.FileTime
+import java.text.SimpleDateFormat
 
 import com.beust.jcommander.Parameter
+import nextflow.Session
+import nextflow.config.ConfigBuilder
 import nextflow.exception.AbortOperationException
 import nextflow.extension.FilesEx
 import nextflow.file.FileHelper
 import nextflow.file.FilePatternSplitter
+import nextflow.util.MemoryUnit
+
 /**
  * Implements `fs` command
  *
@@ -45,23 +54,63 @@ class CmdFs extends CmdBase implements UsageAware {
         commands << new CmdList()
         commands << new CmdCat()
         commands << new CmdRemove()
+        commands << new CmdMakeDir()
     }
 
-    trait SubCmd {
+    abstract static class SubCmd<T> {
+
         abstract int getArity()
 
         abstract String getName()
 
         abstract String getDescription()
 
-        abstract void apply(Path source, Path target)
+        abstract void apply(Path source, BasicFileAttributes attrs, Path target)
 
         String usage() {
             "Usage: nextflow fs ${name} " + (arity==1 ? "<path>" : "source_file target_file")
         }
+
+        void execute(List<String> args) {
+            if( args.size() < arity ) {
+                throw new AbortOperationException(usage())
+            }
+
+            if( !args[0] ) {
+                throw new AbortOperationException("Missing source file")
+            }
+
+            Path target = args.size()>1 ? args[1] as Path : null
+            traverse(source(args[0])) { Path path, BasicFileAttributes attrs -> apply(path, attrs, target) }
+        }
+
+        protected String source(String path) {
+            return path
+        }
+
+        protected void traverse( String source, Closure op ) {
+
+            // if it isn't a glob pattern simply return it a normalized absolute Path object
+            def splitter = FilePatternSplitter.glob().parse(source)
+            if( splitter.isPattern() ) {
+                final folder = splitter.folder as Path
+                final pattern = splitter.fileName
+
+                def opts = [:]
+                opts.type = 'any'
+                opts.relative = true
+
+                FileHelper.visitFiles(opts, folder, pattern, op)
+            }
+            else {
+                def normalised = splitter.strip(source)
+                op.call(FileHelper.asPath(normalised), null)
+            }
+
+        }
     }
 
-    static class CmdCopy implements SubCmd {
+    static class CmdCopy extends SubCmd {
 
         @Override
         int getArity() { 2 }
@@ -72,13 +121,13 @@ class CmdFs extends CmdBase implements UsageAware {
         String getDescription() { 'Copy a file' }
 
         @Override
-        void apply(Path source, Path target) {
+        void apply(Path source, BasicFileAttributes attrs, Path target) {
             FilesEx.copyTo(source, target)
         }
 
     }
 
-    static class CmdMove implements SubCmd {
+    static class CmdMove extends SubCmd {
 
         @Override
         int getArity() { 2 }
@@ -89,13 +138,19 @@ class CmdFs extends CmdBase implements UsageAware {
         String getDescription() { 'Move a file' }
 
         @Override
-        void apply(Path source, Path target) {
+        void apply(Path source, BasicFileAttributes attrs, Path target) {
             FilesEx.moveTo(source, target)
         }
 
     }
 
-    static class CmdList implements SubCmd {
+    static class CmdList extends SubCmd {
+
+        static final FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+
+        static final int LEN_DATE = 20
+
+        static final int LEN_SIZE = 8
 
         @Override
         int getArity() { 1 }
@@ -106,13 +161,49 @@ class CmdFs extends CmdBase implements UsageAware {
         String getName() { 'ls' }
 
         @Override
-        void apply(Path source, Path target) {
-            println source.name
+        void apply(Path source, BasicFileAttributes attr, Path unused ) {
+            if( attr == null )
+                attr = Files.readAttributes(source,BasicFileAttributes)
+            
+            if( attr.directory )
+                println formatDir(source)
+            else
+                println formatFile(source,attr)
         }
 
+        private formatDir(Path source) {
+            def result = new StringBuilder()
+            result << ''.padLeft(LEN_DATE+1)
+            result << ''.padLeft(LEN_SIZE+1)
+            result << (source.toString() + '/')
+            result.toString()
+        }
+
+        private formatFile(Path source, BasicFileAttributes attrs)  {
+            "${date(attrs.lastModifiedTime())} ${size(attrs.size())} ${source}"
+        }
+
+        private String date(FileTime time) {
+            def millis = time?.toMillis()
+            def result = millis ? FORMATTER.format(millis) : '-'
+            result.padRight(LEN_DATE)
+        }
+
+        private String size(Long value) {
+            def result = value != null ? new MemoryUnit(value).toString() : '-'
+            result.padLeft(LEN_SIZE)
+        }
+
+        protected String source(String path) {
+            def p = path as Path
+            if( p.isDirectory() )
+                FileHelper.toQualifiedPathString( p.resolve('*') )
+            else
+                path
+        }
     }
 
-    static class CmdCat implements SubCmd {
+    static class CmdCat extends SubCmd {
 
         @Override
         int getArity() { 1 }
@@ -124,7 +215,7 @@ class CmdFs extends CmdBase implements UsageAware {
         String getDescription() { 'Print a file to the stdout' }
 
         @Override
-        void apply(Path source, Path target) {
+        void apply(Path source, BasicFileAttributes attrs, Path target) {
             String line
             def reader = Files.newBufferedReader(source, Charset.defaultCharset())
             while( line = reader.readLine() )
@@ -133,7 +224,7 @@ class CmdFs extends CmdBase implements UsageAware {
 
     }
 
-    static class CmdRemove implements SubCmd {
+    static class CmdRemove extends SubCmd {
 
         @Override
         int getArity() { 1 }
@@ -145,8 +236,25 @@ class CmdFs extends CmdBase implements UsageAware {
         String getDescription() { 'Remove a file' }
 
         @Override
-        void apply(Path source, Path target) {
+        void apply(Path source, BasicFileAttributes attrs, Path target) {
             Files.isDirectory(source) ? FilesEx.deleteDir(source) : FilesEx.delete(source)
+        }
+
+    }
+
+    static class CmdMakeDir extends SubCmd {
+        @Override
+        int getArity() { 1 }
+
+        @Override
+        String getName() { 'mkdir' }
+
+        @Override
+        String getDescription() { 'Create a directory' }
+
+        @Override
+        void apply(Path source, BasicFileAttributes attrs, Path target) {
+            Files.createDirectories(path)
         }
 
     }
@@ -167,53 +275,24 @@ class CmdFs extends CmdBase implements UsageAware {
             return
         }
 
+        final base = Paths.get('.')
+        final config = new ConfigBuilder()
+                .setOptions(launcher.options)
+                .setBaseDir(base.complete())
+                .build()
+        // this smells bad! the constructor below set the session as a singleton object
+        new Session(config)
+
         final cmd = findCmd(args[0])
         if( !cmd ) {
             throw new AbortOperationException("Unknow file system command: `$cmd`")
         }
 
-        Path target
-        String source
-        if( cmd.arity==1 ) {
-            if( args.size() < 2 )
-                throw new AbortOperationException(cmd.usage())
-            source = args[1]
-            target = null
-        }
-        else {
-            if( args.size() < 3 )
-                throw new AbortOperationException(cmd.usage())
-            source = args[1]
-            target = args[2] as Path
-        }
-
-        traverse(source) { Path path -> cmd.apply(path, target) }
+        cmd.execute(args[1..-1])
     }
 
     private SubCmd findCmd( String name ) {
         commands.find { it.name == name }
-    }
-
-    private void traverse( String source, Closure op ) {
-
-        // if it isn't a glob pattern simply return it a normalized absolute Path object
-        def splitter = FilePatternSplitter.glob().parse(source)
-        if( splitter.isPattern() ) {
-            final scheme = splitter.scheme
-            final folder = splitter.parent
-            final pattern = splitter.fileName
-            final fs = FileHelper.fileSystemForScheme(scheme)
-
-            def opts = [:]
-            opts.type = 'file'
-
-            FileHelper.visitFiles(opts, fs.getPath(folder), pattern, op)
-        }
-        else {
-            def normalised = splitter.strip(source)
-            op.call(FileHelper.asPath(normalised))
-        }
-
     }
 
     /**

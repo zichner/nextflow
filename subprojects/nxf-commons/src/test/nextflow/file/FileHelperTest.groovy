@@ -346,7 +346,7 @@ class FileHelperTest extends Specification {
 
         given:
         def sess = Global.session = Mock(ISession)
-        sess.getConfig() >> [google:[credentials: cfg_file, projectId: cfg_project]]
+        sess.getConfig() >> [gcp:[credentials: cfg_file, projectId: cfg_project]]
         def env = [:]
         env.put('GOOGLE_PROJECT_ID',env_project)
         env.put('GOOGLE_APPLICATION_CREDENTIALS',env_file)

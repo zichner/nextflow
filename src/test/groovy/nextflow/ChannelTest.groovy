@@ -31,8 +31,6 @@ import groovyx.gpars.dataflow.DataflowQueue
 import org.junit.Rule
 import spock.lang.Specification
 import test.TemporaryPath
-import test.TestHelper
-
 /**
  *
  * @author Paolo Di Tommaso <paolo.ditommaso@gmail.com>
@@ -401,7 +399,7 @@ class ChannelTest extends Specification {
     def 'should group files with the same prefix' () {
 
         setup:
-        def folder = TestHelper.createInMemTempDir()
+        def folder = Files.createTempDirectory('test')
         def a1 = Files.createFile(folder.resolve('alpha_1.fa'))
         def a2 = Files.createFile(folder.resolve('alpha_2.fa'))
         def b1 = Files.createFile(folder.resolve('beta_1.fa'))
@@ -424,12 +422,15 @@ class ChannelTest extends Specification {
         pairs.val == ['beta', b1, b2]
         pairs.val == ['delta', d1, d2]
         pairs.val == Channel.STOP
+
+        cleanup:
+        folder?.deleteDir()
     }
 
     def 'should group files with the same prefix and setting size' () {
 
         setup:
-        def folder = TestHelper.createInMemTempDir()
+        def folder = Files.createTempDirectory('test')
         def a1 = Files.createFile(folder.resolve('alpha_1.fa'))
         def a2 = Files.createFile(folder.resolve('alpha_2.fa'))
         def a3 = Files.createFile(folder.resolve('alpha_3.fa'))
@@ -468,6 +469,8 @@ class ChannelTest extends Specification {
         pairs.val == ['delta', [d1, d2, d3, d4]]
         pairs.val == Channel.STOP
 
+        cleanup:
+        folder?.deleteDir()
     }
 
 

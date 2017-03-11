@@ -25,7 +25,6 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW
 import static nextflow.util.CheckHelper.checkParams
 
-import java.nio.file.FileSystem
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -199,7 +198,7 @@ class Channel  {
 
         // split the folder and the pattern
         final splitter = FilePatternSplitter.regex().parse(filePattern.toString())
-        pathImpl( 'regex', splitter.parent, splitter.fileName, opts, splitter.fileSystem )
+        pathImpl( 'regex', splitter.folder, splitter.fileName, opts )
     }
 
 
@@ -207,23 +206,21 @@ class Channel  {
 
         def glob = opts?.containsKey('glob') ? opts.glob as boolean : true
         if( !glob ) {
-            def result = ( filePattern instanceof Path
-                    ? filePattern.complete()
-                    : FileHelper.asPath(filePattern.toString()).complete())
+            final result = filePattern.complete()
             return Nextflow.channel(result)
         }
 
-        final fs = filePattern.getFileSystem()
-        final path = filePattern.toString()
+        final path = FileHelper.toQualifiedPathString(filePattern)
         final splitter = FilePatternSplitter.glob().parse(path)
 
         if( !splitter.isPattern() ) {
-            return Nextflow.channel( fs.getPath( splitter.strip(path) ).complete() )
+            final result = splitter.strip(path) as Path
+            return Nextflow.channel( result.complete() )
         }
 
-        final folder = splitter.parent
+        final folder = splitter.folder
         final pattern = splitter.fileName
-        final result = pathImpl('glob', folder, pattern, opts, fs)
+        final result = pathImpl('glob', folder, pattern, opts)
         return result
     }
 
@@ -248,12 +245,12 @@ class Channel  {
      * @param skipHidden Whenever skip the hidden files
      * @return A dataflow channel instance emitting the file matching the specified criteria
      */
-    static private DataflowChannel<Path> pathImpl( String syntax, String folder, String pattern, Map opts, FileSystem fs )  {
+    static private DataflowChannel<Path> pathImpl( String syntax, String folder, String pattern, Map opts )  {
         assert syntax in ['regex','glob']
         log.debug "files for syntax: $syntax; folder: $folder; pattern: $pattern; options: ${opts}"
 
         // now apply glob file search
-        final path = fs.getPath(folder).complete()
+        final path = FileHelper.asPath(folder).complete()
         final channel = new DataflowQueue<Path>()
 
         if( opts == null )
@@ -282,13 +279,13 @@ class Channel  {
     }
 
 
-    static private DataflowChannel<Path> watchImpl( String syntax, String folder, String pattern, boolean skipHidden, String events, FileSystem fs ) {
+    static private DataflowChannel<Path> watchImpl( String syntax, String folder, String pattern, boolean skipHidden, String events ) {
         assert syntax in ['regex','glob']
         log.debug "Watch service for path: $folder; syntax: $syntax; pattern: $pattern; skipHidden: $skipHidden; events: $events"
 
         // now apply glob file search
         final result = create()
-        final path = fs.getPath(folder)
+        final path = FileHelper.asPath(folder)
         if( !path.isDirectory() ) {
             log.warn "Cannot watch a not existing path: $path -- Make sure that path exists and it is a directory"
             result.bind(STOP)
@@ -367,7 +364,7 @@ class Channel  {
         assert filePattern
         // split the folder and the pattern
         final splitter = FilePatternSplitter.regex().parse(filePattern.toString())
-        def result = watchImpl( 'regex', splitter.parent, splitter.fileName, false, events, splitter.fileSystem )
+        def result = watchImpl( 'regex', splitter.folder, splitter.fileName, false, events )
 
         session.dag.addSourceNode('Channel.watchPath', result)
         return result
@@ -391,22 +388,21 @@ class Channel  {
      */
     static DataflowChannel<Path> watchPath( String filePattern, String events = 'create' ) {
 
-        final splitter = FilePatternSplitter.regex().parse(filePattern.toString())
-        final fs = splitter.fileSystem
-        final folder = splitter.parent
+        final splitter = FilePatternSplitter.regex().parse(filePattern)
+        final folder = splitter.folder
         final pattern = splitter.fileName
-        def result = watchImpl('glob', folder, pattern, pattern.startsWith('*'), events, fs)
+        def result = watchImpl('glob', folder, pattern, pattern.startsWith('*'), events)
 
         session.dag.addSourceNode('Channel.watchPath', result)
         return result
     }
 
     static DataflowChannel<Path> watchPath( Path path, String events = 'create' ) {
-        final fs = path.getFileSystem()
-        final splitter = FilePatternSplitter.regex().parse(path.toString())
-        final folder = splitter.parent
+        final fullPath = FileHelper.toQualifiedPathString(path)
+        final splitter = FilePatternSplitter.regex().parse(fullPath)
+        final folder = splitter.folder
         final pattern = splitter.fileName
-        final result = watchImpl('glob', folder, pattern, pattern.startsWith('*'), events, fs)
+        final result = watchImpl('glob', folder, pattern, pattern.startsWith('*'), events)
 
         session.dag.addSourceNode('Channel.watchPath', result)
         return result
@@ -457,7 +453,7 @@ class Channel  {
 
         // -- a channel from the path
         def fromOpts = fetchParams(VALID_PATH_PARAMS, options)
-        def files = fromPath0(fromOpts,filePattern)
+        def files = fromPath0(fromOpts, filePattern)
 
         // -- map the files to a tuple like ( ID, filePath )
         def mapper = { path ->

@@ -42,7 +42,7 @@ When using Nextflow from within a Google Compute instance, no additional authent
 In all other cases it is required to specify a `Google service account key <https://cloud.google.com/storage/docs/authentication?hl=en#service_accounts>`_
 and project ID in the ``nextflow.config`` file as shown below::
 
-    google {
+    gcp {
         projectId = 'your-project-id'
         credentials = '/path/to/your/credentials/file.json'
     }

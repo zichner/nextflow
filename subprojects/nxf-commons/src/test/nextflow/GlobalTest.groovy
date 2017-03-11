@@ -106,10 +106,10 @@ class GlobalTest extends Specification {
         given:
         def session
         session = Mock(ISession)
-        session.getConfig() >> [google: [projectId: cfg_prj, credentials: cfg_file]]
+        session.getConfig() >> [gcp: [projectId: cfg_prj, credentials: cfg_file]]
 
         when:
-        def config = Global.getGCloudConfig0(session, [GOOGLE_PROJECT_ID: env_prj, GOOGLE_APPLICATION_CREDENTIALS: env_file])
+        def config = Global.getGcpConfig0(session, [GOOGLE_PROJECT_ID: env_prj, GOOGLE_APPLICATION_CREDENTIALS: env_file])
         then:
         config.credentials == expected.credentials
         config.projectId == expected.projectId

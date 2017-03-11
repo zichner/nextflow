@@ -77,7 +77,7 @@ allprojects {
         testCompile ("org.spockframework:spock-core:1.0-groovy-2.4") {
             exclude module: 'groovy-all'
         }
-        testCompile 'com.google.jimfs:jimfs:1.0'
+        testCompile 'com.google.jimfs:jimfs:1.1'
     }
 
     // this is required due to this IDEA bug
@@ -106,12 +106,12 @@ configurations {
     ignite.extendsFrom runtime
     console.extendsFrom runtime
     gdocLibs.extendsFrom runtime
+    gcloud
 }
 
 dependencies {
     compile(project(':nxf-commons'))
     compile(project(':nxf-httpfs'))
-    compile(project(':nxf-gcloud'))
     compile "org.codehaus.groovy:groovy:2.4.9"
     compile "org.codehaus.groovy:groovy-nio:2.4.9"
     compile "org.codehaus.groovy:groovy-json:2.4.9"
@@ -147,6 +147,8 @@ dependencies {
 
     // Capsule manages the fat jar building process
     capsule(project(':my-capsule'))
+
+    gcloud(project(':nxf-gcloud'))
 
     // DnaNexus build dependencies
     dnanexus(project(':nxf-dnanexus')) {
@@ -370,6 +372,12 @@ task packOne(type: Jar) {
     deps = resolveDeps('drmaa')
     manifest.attributes('Dependencies': deps, 'drmaa')
 
+    /*
+     * gcloud + ignite
+     */
+    deps = resolveDeps('gcloud', 'ignite')
+    manifest.attributes('Dependencies': deps, 'gcloud')
+
     doLast {
         ant.copy(file: "$buildDir/libs/nextflow-${version}-one.jar", todir: releaseDir, overwrite: true)
         ant.copy(file: "$buildDir/libs/nextflow-${version}-one.jar", todir: nextflowDir, overwrite: true)
@@ -575,7 +583,7 @@ task exportClasspath {
     dependsOn configurations.ignite, configurations.console
 
     def home = System.getProperty('user.home')
-    def all = configurations.ignite + configurations.console
+    def all = configurations.ignite + configurations.console + configurations.gcloud
     def libs = all.collect { File file -> /* println file.canonicalPath.replace(home, '$HOME'); */ file.canonicalPath;  }
     new File('.launch.classpath').text = libs.join(':')
 }

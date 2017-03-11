@@ -68,13 +68,13 @@ class Global {
      * Retrieve the configuration object for Google Cloud
      * @return
      */
-    static Map<String,?> getGCloudConfig(Map env=null) {
-        getGCloudConfig0(session, env ?: System.getenv())
+    static Map<String,?> getGcpConfig(Map env=null) {
+        getGcpConfig0(session, env ?: System.getenv())
     }
 
     @PackageScope
-    static Map<String,?> getGCloudConfig0(ISession session, Map<String,String> env) {
-        def config = session.config.google
+    static Map<String,?> getGcpConfig0(ISession session, Map<String,String> env) {
+        def config = session.config.gcp
         if( !(config instanceof Map) )
             config = [:]
 

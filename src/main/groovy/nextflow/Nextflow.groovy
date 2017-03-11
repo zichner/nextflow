@@ -20,7 +20,6 @@
 
 package nextflow
 
-import java.nio.file.FileSystem
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -100,23 +99,20 @@ class Nextflow {
         return channel(items as List)
     }
 
-    static private fileNamePattern( FilePatternSplitter splitter, Map opts, FileSystem fs ) {
+    static private fileNamePattern( FilePatternSplitter splitter, Map opts ) {
 
-        final folder = splitter.parent
         final pattern = splitter.fileName
-
-        if( !fs )
-            fs = splitter.fileSystem
+        final folder = FileHelper.asPath(splitter.folder).complete()
 
         if( opts == null ) opts = [:]
         if( !opts.type ) opts.type = 'file'
 
         def result = new LinkedList()
         try {
-            FileHelper.visitFiles(opts, fs.getPath(folder), pattern) { Path it -> result.add(it) }
+            FileHelper.visitFiles(opts, folder, pattern) { Path it -> result.add(it) }
         }
         catch (NoSuchFileException e) {
-            log.debug "No such file: $folder -- Skipping visit"
+            log.debug "No such file: $splitter.folder -- Skipping visit"
         }
         return result
 
@@ -138,9 +134,6 @@ class Nextflow {
     static file( Map options = null, def path ) {
         assert path
 
-        if( path == null )
-            return null
-
         def glob = options?.containsKey('glob') ? options.glob as boolean : true
         if( !glob ) {
             return ( path instanceof Path
@@ -148,11 +141,11 @@ class Nextflow {
                     : FileHelper.asPath(path.toString()).complete())
         }
 
-
         // if it isn't a glob pattern simply return it a normalized absolute Path object
-        def splitter = FilePatternSplitter.glob().parse(path.toString())
+        def fullPath = FileHelper.toQualifiedPathString(path)
+        def splitter = FilePatternSplitter.glob().parse(fullPath)
         if( !splitter.isPattern() ) {
-            def normalised = splitter.strip(path.toString())
+            def normalised = splitter.strip(fullPath)
             if( path instanceof Path )  {
                 return path.fileSystem.getPath(normalised).complete()
             }
@@ -161,13 +154,8 @@ class Nextflow {
             }
         }
 
-        FileSystem fs = null
-        if( path instanceof Path ) {
-            fs = path.getFileSystem()
-        }
-
         // revolve the glob pattern returning all matches
-        return fileNamePattern(splitter, options, fs)
+        return fileNamePattern(splitter, options)
     }
 
     static files( Map options=null, def path ) {
