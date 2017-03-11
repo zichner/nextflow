@@ -118,7 +118,7 @@ class MemoryUnit implements Comparable<MemoryUnit>, Serializable, Cloneable {
     }
 
     def multiply( Number value ) {
-        return new MemoryUnit( size * value.toLong() )
+        return new MemoryUnit( size * value as long )
     }
 
     def div( Number value ) {
