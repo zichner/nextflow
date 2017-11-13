@@ -277,7 +277,12 @@ class TaskPollingMonitor implements TaskMonitor {
         this.slotAvail = pendingQueueLock.newCondition()
 
         // remove pending tasks on termination
-        session.onShutdown { this.cleanup() }
+        session.onShutdown {
+            this.cleanup()
+            taskComplete.signal()
+            taskAvail.signal()
+            slotAvail.signal()
+        }
 
         // launch the thread polling the queue
         Thread.start('Task monitor') {
