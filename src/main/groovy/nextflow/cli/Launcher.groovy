@@ -19,15 +19,12 @@
  */
 
 package nextflow.cli
-import static nextflow.Const.APP_BUILDNUM
-import static nextflow.Const.APP_NAME
-import static nextflow.Const.APP_VER
-import static nextflow.Const.SPLASH
+
+import static nextflow.Const.*
 
 import java.lang.reflect.Field
 
 import com.beust.jcommander.DynamicParameter
-import com.beust.jcommander.JCommander
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.ParameterException
 import com.beust.jcommander.Parameters
@@ -46,7 +43,6 @@ import nextflow.util.LoggerHelper
 import org.codehaus.groovy.control.CompilationFailedException
 import org.eclipse.jgit.api.errors.GitAPIException
 import picocli.CommandLine
-
 /**
  * Main application entry point. It parses the command line and
  * launch the pipeline execution.
@@ -73,8 +69,6 @@ class Launcher {
 
     private String cliString
 
-    //private List<CmdBase> allCommands
-
     private List<String> normalizedArgs
 
     private boolean daemonMode
@@ -91,24 +85,29 @@ class Launcher {
     }
 
     protected void init() {
-        commandLine = new CommandLine(new CliOptions())
-                .addSubcommand("clean",   new CmdClean(launcher:this))
-                .addSubcommand("clone",   new CmdClone(launcher:this))
-                .addSubcommand("cloud",   new CmdCloud(launcher:this))
-                .addSubcommand("fs",   new CmdFs(launcher:this))
+        options = new CliOptions()
+        commandLine = new CommandLine(options)
+                .addSubcommand("clean",  new CmdClean(launcher:this))
+                .addSubcommand("clone",  new CmdClone(launcher:this))
+                .addSubcommand("cloud",  new CmdCloud(launcher:this))
+                .addSubcommand("fs",     new CmdFs(launcher:this))
                 .addSubcommand("info",   new CmdInfo(launcher:this))
                 .addSubcommand("list",   new CmdList(launcher:this))
-                .addSubcommand("log",   new CmdLog(launcher:this))
+                .addSubcommand("log",    new CmdLog(launcher:this))
                 .addSubcommand("pull",   new CmdPull(launcher:this))
-                .addSubcommand("run",   new CmdRun(launcher:this))
+                .addSubcommand("run",    new CmdRun(launcher:this))
                 .addSubcommand("drop",   new CmdDrop(launcher:this))
-                .addSubcommand("config",   new CmdConfig(launcher:this))
+                .addSubcommand("config", new CmdConfig(launcher:this))
                 .addSubcommand("node",   new CmdNode(launcher:this))
                 .addSubcommand("view",   new CmdView(launcher:this))
                 .addSubcommand("help",   new CmdHelp(launcher:this))
-                .addSubcommand("update",   new CmdSelfUpdate(launcher:this))
-
+                .addSubcommand("update", new CmdSelfUpdate(launcher:this))
     }
+
+    protected List<CmdBase> getAllCommands() {
+        commandLine.getSubcommands().values().collect { cli -> cli.getCommand() as CmdBase }
+    }
+
     /**
      * Create the Jcommander 'interpreter' and parse the command line arguments
      */
@@ -180,7 +179,7 @@ class Launcher {
             normalized << current
 
             // when the first argument is a file, it's supposed to be a script to be executed
-            if( i==1 && !commandLine.subcommands.keySet().find { it==current } && new File(current).isFile()  ) {
+            if( i==1 && !allCommands.find { it.name == current } && new File(current).isFile()  ) {
                 normalized.add(0,CmdRun.NAME)
             }
 
@@ -232,7 +231,7 @@ class Launcher {
                 normalized << 'true'
             }
 
-            else if( current == '-syslog' && (i==args.size() || args[i].startsWith('-') || commandLine.subcommands.keySet().find { it == args[i] } )) {
+            else if( current == '-syslog' && (i==args.size() || args[i].startsWith('-') || allCommands.find { it.name == args[i] } )) {
                 normalized << 'localhost'
             }
 
@@ -331,14 +330,11 @@ class Launcher {
         }
     }
 
-    protected void printCommands(CommandLine commands) {
+    protected void printCommands(List<CmdBase> commands) {
         println "\nCommands:"
 
         int len = 0
         def all = new TreeMap<String,String>()
-        Map<String, CommandLine> subcomands = commands.getSubcommands()
-
-
         new ArrayList<CmdBase>(commands).each {
             def description = it.getClass().getAnnotation(Parameters)?.commandDescription()
             if( description ) {
