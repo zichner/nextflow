@@ -19,19 +19,16 @@
  */
 
 package nextflow.cli
-import com.beust.jcommander.Parameter
-import com.beust.jcommander.Parameters
+
 import groovy.transform.CompileStatic
 import picocli.CommandLine
-
 /**
  * CLI sub-command HELP
  *
  * @author Paolo Di Tommaso <paolo.ditommaso@gmail.com>
  */
 @CompileStatic
-//@Parameters(commandDescription = "Print the usage help for a command")
-@CommandLine.Command(name = "Help", description ="Print the usage help for a command")
+@CommandLine.Command(name = "help", description ="Print the usage help for a command")
 class CmdHelp extends CmdBase {
 
     static final public NAME = 'help'
@@ -39,23 +36,18 @@ class CmdHelp extends CmdBase {
     @Override
     final String getName() { NAME }
 
-    //@Parameter(description = 'command name', arity = 1)
-    @CommandLine.Parameters(arity = "1", description = "Command name")
+    @CommandLine.Parameters(arity = "0..1", description = "Command name")
     List<String> args
-
-    private UsageAware getUsage( List<String> args ) {
-        def result = args ? launcher.findCommand(args[0]) : null
-        result instanceof UsageAware ? result as UsageAware: null
-    }
 
     @Override
     void run() {
-        def cmd = getUsage(args)
+        String name = args ? args[0] : null
+        def cmd = launcher.findCommand(name)
         if( cmd ) {
-            cmd.usage(args.size()>1 ? args[1..-1] : Collections.<String>emptyList())
+            launcher.usage(cmd)
         }
         else {
-            launcher.usage(args ? args[0] : null)
+            println "Unknown command: $name"
         }
     }
 }

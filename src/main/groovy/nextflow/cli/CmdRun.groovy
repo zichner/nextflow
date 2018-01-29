@@ -19,13 +19,11 @@
  */
 
 package nextflow.cli
+
 import java.nio.file.Files
 import java.nio.file.Path
 
-import com.beust.jcommander.DynamicParameter
-import com.beust.jcommander.IStringConverter
 import com.beust.jcommander.Parameter
-import com.beust.jcommander.Parameters
 import groovy.json.JsonSlurper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -43,7 +41,6 @@ import nextflow.util.Duration
 import nextflow.util.HistoryFile
 import org.yaml.snakeyaml.Yaml
 import picocli.CommandLine
-
 /**
  * CLI sub-command RUN
  *

@@ -61,10 +61,14 @@ class Launcher {
 
     private CommandLine commandLine
 
+    private CommandLine parsedCommand
+
     private CliOptions options
 
     private boolean fullVersion
 
+    @Deprecated
+    //  with picocli this is not necessary any more
     private CmdBase command
 
     private String cliString
@@ -87,21 +91,21 @@ class Launcher {
     protected void init() {
         options = new CliOptions()
         commandLine = new CommandLine(options)
-                .addSubcommand("clean",  new CmdClean(launcher:this))
-                .addSubcommand("clone",  new CmdClone(launcher:this))
-                .addSubcommand("cloud",  new CmdCloud(launcher:this))
-                .addSubcommand("fs",     new CmdFs(launcher:this))
-                .addSubcommand("info",   new CmdInfo(launcher:this))
-                .addSubcommand("list",   new CmdList(launcher:this))
-                .addSubcommand("log",    new CmdLog(launcher:this))
-                .addSubcommand("pull",   new CmdPull(launcher:this))
-                .addSubcommand("run",    new CmdRun(launcher:this))
-                .addSubcommand("drop",   new CmdDrop(launcher:this))
-                .addSubcommand("config", new CmdConfig(launcher:this))
-                .addSubcommand("node",   new CmdNode(launcher:this))
-                .addSubcommand("view",   new CmdView(launcher:this))
-                .addSubcommand("help",   new CmdHelp(launcher:this))
-                .addSubcommand("update", new CmdSelfUpdate(launcher:this))
+                .addSubcommand("clean",  new CmdClean())
+                .addSubcommand("clone",  new CmdClone())
+                .addSubcommand("cloud",  new CmdCloud())
+                .addSubcommand("fs",     new CmdFs())
+                .addSubcommand("info",   new CmdInfo())
+                .addSubcommand("list",   new CmdList())
+                .addSubcommand("log",    new CmdLog())
+                .addSubcommand("pull",   new CmdPull())
+                .addSubcommand("run",    new CmdRun())
+                .addSubcommand("drop",   new CmdDrop())
+                .addSubcommand("config", new CmdConfig())
+                .addSubcommand("node",   new CmdNode())
+                .addSubcommand("view",   new CmdView())
+                .addSubcommand("help",   new CmdHelp())
+                .addSubcommand("update", new CmdSelfUpdate())
     }
 
     protected List<CmdBase> getAllCommands() {
@@ -111,27 +115,27 @@ class Launcher {
     /**
      * Create the Jcommander 'interpreter' and parse the command line arguments
      */
-    //@Deprecated
-   // @PackageScope
-    /*uncher parseMainArgs(String... args) {
-        this.cliString = System.getenv('NXF_CLI')
-        this.colsString = System.getenv('COLUMNS')
-
-        def cols = getColumns()
-        if( cols )
-            jcommander.setColumnSize(cols)
-
-        normalizedArgs = normalizeArgs(args)
-        jcommander.parse( normalizedArgs as String[] )
-        fullVersion = '-version' in normalizedArgs
-        command = allCommands.find { it.name == jcommander.getParsedCommand()  }
-        // whether is running a daemon
-        daemonMode = command instanceof CmdNode
-        // set the log file name
-        checkLogFileName()
-
-        return this
-    }*/
+//    @Deprecated
+//    @PackageScope
+//    Launcher parseMainArgs(String... args) {
+//        this.cliString = System.getenv('NXF_CLI')
+//        this.colsString = System.getenv('COLUMNS')
+//
+//        def cols = getColumns()
+//        if( cols )
+//            jcommander.setColumnSize(cols)
+//
+//        normalizedArgs = normalizeArgs(args)
+//        jcommander.parse( normalizedArgs as String[] )
+//        fullVersion = '-version' in normalizedArgs
+//        command = allCommands.find { it.name == jcommander.getParsedCommand()  }
+//        // whether is running a daemon
+//        daemonMode = command instanceof CmdNode
+//        // set the log file name
+//        checkLogFileName()
+//
+//        return this
+//    }
 
     private void checkLogFileName() {
         if( !options.logFile ) {
@@ -279,8 +283,7 @@ class Launcher {
     }
 
     CommandLine findCommand( String cmdName ) {
-        commandLine.subcommands.get(cmdName)
-
+        cmdName ? commandLine.subcommands.get(cmdName) : commandLine
     }
 
     /**
@@ -290,24 +293,11 @@ class Launcher {
      * @param command The command for which get help or {@code null}
      * @return The usage string
      */
-    void usage(String command = null ) {
-
-        if( command ) {
-            def exists = commandLine.subcommands.keySet().find { it == command } != null
-            if( !exists ) {
-                println "Asking help for unknown command: $command"
-                return
-            }
-            commandLine.usage(command as PrintStream)
-            //ommander.usage(command)
-            return
-        }
-
-        println "Usage: nextflow [options] COMMAND [arg...]\n"
-        printOptions(CliOptions)
-        printCommands(allCommands)
+    void usage( CommandLine command ) {
+        command.usage(System.out)
     }
 
+    @Deprecated
     @CompileDynamic
     protected void printOptions(Class clazz) {
         List params = []
@@ -330,6 +320,7 @@ class Launcher {
         }
     }
 
+    @Deprecated
     protected void printCommands(List<CmdBase> commands) {
         println "\nCommands:"
 
@@ -379,44 +370,40 @@ class Launcher {
         this.cliString = System.getenv('NXF_CLI')
         this.colsString = System.getenv('COLUMNS')
 
-        def top = new CommandLine(new CliOptions())
-        for( CmdBase cmd : allCommands ) {
-            top.addSubcommand( cmd.name, cmd )
-        }
-
-        def commands = top.parse(args)
-        def cmd = commands.last().getCommand()
+        this.parsedCommand = commandLine.parse(args).last()
+        def cmd = parsedCommand.getCommand()
         if( cmd instanceof CmdBase ) {
             cmd.launcher = this
             command = cmd
         }
 
         // whether is running a daemon
-        daemonMode = command instanceof CmdNode
+        daemonMode = parsedCommand.command instanceof CmdNode
         // set the log file name
         checkLogFileName()
 
         return this
     }
 
-    protected void checkForHelp() {
-        if( options.help || !command || command.help ) {
-            if( command instanceof UsageAware ) {
-                (command as UsageAware).usage()
-                // reset command to null to skip default execution
-                command = null
-                return
-            }
-
-            // replace the current command with the `help` command
-            def target = command?.name
-            command = allCommands.find { it instanceof CmdHelp }
-            if( target ) {
-                (command as CmdHelp).args = [target]
-            }
-        }
-
-    }
+//    protected void checkForHelp() {
+//        if( options.help || !command || command.help ) {
+//            if( command instanceof UsageAware ) {
+//                (command as UsageAware).usage()
+//                // reset command to null to skip default execution
+//                command = null
+//                return
+//            }
+//
+//            // replace the current command with the `help` command
+//            def target = command?.name
+//            command = allCommands.find { it instanceof CmdHelp }
+//            if( target && command ) {
+//                command.launcher = this
+//                (command as CmdHelp).args = [target]
+//            }
+//        }
+//
+//    }
 
     /**
      * Launch the pipeline execution
@@ -441,10 +428,13 @@ class Launcher {
             }
 
             // -- print out the program help, then exit
-            checkForHelp()
-
-            // launch the command
-            command?.run()
+            if( parsedCommand.isUsageHelpRequested() || !parsedCommand.parent ) {
+                usage(parsedCommand)
+            }
+            else {
+                // launch the command
+                (parsedCommand.command as CmdBase).run()
+            }
 
             log.trace "Exit\n" + dumpThreads()
             return 0

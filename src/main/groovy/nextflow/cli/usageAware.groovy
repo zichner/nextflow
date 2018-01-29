@@ -26,6 +26,8 @@ package nextflow.cli
  *
  * @author Paolo Di Tommaso <paolo.ditommaso@gmail.com>
  */
+@Deprecated
+// TODO this must be replaced by the picocli help feature
 interface UsageAware {
 
     void usage()
