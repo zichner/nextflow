@@ -20,13 +20,13 @@
 
 package nextflow.cli
 
-import com.beust.jcommander.Parameter
-import com.beust.jcommander.Parameters
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import nextflow.exception.AbortOperationException
 import nextflow.scm.AssetManager
-import picocli.CommandLine
+import picocli.CommandLine.Command
+import picocli.CommandLine.Option
+import picocli.CommandLine.Parameters
 
 /**
  * CLI sub-command VIEW -- Print a pipeline script to console
@@ -35,8 +35,7 @@ import picocli.CommandLine
  */
 @Slf4j
 @CompileStatic
-//@Parameters(commandDescription = "View project script file(s)")
-@CommandLine.Command(name = "View", description ="View project script file(s)")
+@Command(name = "view", description ="View project script file(s)")
 class CmdView extends CmdBase {
 
     static final public NAME = 'view'
@@ -44,16 +43,13 @@ class CmdView extends CmdBase {
     @Override
     String getName() { NAME }
 
-    //@Parameter(description = 'project name', required = true)
-    @CommandLine.Parameters(description = 'project name', arity = '1..*')
+    @Parameters(description = 'Project name', arity = '1..*',paramLabel = "Project_Name")
     List<String> args = []
 
-    //@Parameter(names = '-q', description = 'Hide header line', arity = 0)
-    @CommandLine.Option(names = ['-q'], description = 'Hide header line', arity = '0')
+    @Option(names = ['-q'], description = 'Hide header line', arity = '0')
     boolean quiet
 
-    //@Parameter(names = '-l', description = 'List repository content', arity = 0)
-    @CommandLine.Option(names = ['-l'], description = 'List repository content', arity = '0')
+    @Option(names = ['-l'], description = 'List repository content', arity = '0')
     boolean all
 
     @Override

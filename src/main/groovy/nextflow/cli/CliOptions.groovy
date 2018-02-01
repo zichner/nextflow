@@ -36,13 +36,13 @@ class CliOptions {
     @Option(names=['--debug'],hidden = true)
     List<String> debug
 
-    @Option(names=['--log'], description = 'Set nextflow log file path')
+    @Option(names=['--log'], description = 'Set nextflow log file path', paramLabel ="<File>")
     String logFile
 
-    @Option(names=['-c','--config'], description = 'Add the specified file to configuration set')
+    @Option(names=['-c','--config'], description = 'Add the specified file to configuration set', paramLabel ="<File>")
     List<String> userConfig
 
-    @Option(names=['-C'], description = 'Use the specified configuration file(s) overriding any defaults')
+    @Option(names=['-C'], description = 'Use the specified configuration file(s) overriding any defaults', paramLabel ="<File>")
     List<String> config
 
     /**
@@ -54,20 +54,14 @@ class CliOptions {
     /**
      * Enable syslog appender
      */
-    @Option(names=['--syslog'], description = 'Send logs to syslog server (eg. localhost:514)' )
+    @Option(names=['--syslog'], description = 'Send logs to syslog server (eg. localhost:514)' , paramLabel ="Destination")
     String syslog
 
     /**
      * Print out the version number and exit
      */
-    @Option(names=['-v','--version'], versionHelp = true, description = 'Print the program version')
+    @Option(names=['-v','--version'], description = 'Print the program version', versionHelp = true)
     boolean version //TODO we can use the 'versionHelp' @link http://picocli.info/#_help_options
-    //  App app = CommandLine.populateCommand(new App(), args);
-    //  if (app.usageHelpRequested) {
-    //    CommandLine.usage(new App(), System.err);
-    //    return;
-    //  }
-    //
 
     /**
      * Print out the 'help' and exit
@@ -81,7 +75,7 @@ class CliOptions {
     @Option(names=['--bg'], description = 'Execute nextflow in background', arity='0')
     boolean background
 
-    @Option(names=['-D'], description = 'Set JVM properties' )
+    @Option(names=['-D'], description = 'Set JVM properties' , paramLabel ="<Key:Value>")
     Map<String,String> jvmOpts = [:]
 
     @Option(names=['-u','--self-update'], description = 'Update nextflow to the latest version', arity = '0', hidden = true)

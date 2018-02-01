@@ -27,8 +27,6 @@ import static nextflow.cloud.CloudConst.TAG_CLUSTER_NAME
 import java.nio.file.Paths
 
 import ch.grengine.Grengine
-import com.beust.jcommander.Parameter
-import com.beust.jcommander.Parameters
 import groovy.transform.PackageScope
 import groovy.util.logging.Slf4j
 import nextflow.Global
@@ -43,7 +41,9 @@ import nextflow.exception.AbortOperationException
 import nextflow.ui.TableBuilder
 import nextflow.ui.TextLabel
 import nextflow.util.SysHelper
-import picocli.CommandLine
+import picocli.CommandLine.Command
+import picocli.CommandLine.Option
+import picocli.CommandLine.Parameters
 
 /**
  * Implements the `cloud` command
@@ -52,8 +52,7 @@ import picocli.CommandLine
  */
 @Slf4j
 //@CompileStatic -- Don't use. It causes a weird exception: CmdCloud$LaunchMaster cannot be cast to nextflow.cli.CmdCloud
-//@Parameters(commandDescription = "Manage Nextflow clusters in the cloud")
-@CommandLine.Command (name = "Cloud", description ="Manage Nextflow clusters in the cloud")
+@Command (name = "cloud", description ="Manage Nextflow clusters in the cloud")
 class CmdCloud extends CmdBase implements UsageAware {
 
     interface SubCmd {
@@ -67,56 +66,44 @@ class CmdCloud extends CmdBase implements UsageAware {
 
     private List<SubCmd> commands = []
 
-    //@Parameter(names=['-driver'], description = 'The name of a cloud driver')
-    @CommandLine.Option(names=['--driver'], description = 'The name of a cloud driver')
+    @Option(names=['--driver'], description = 'The name of a cloud driver',paramLabel = "DriverName")
     String driverName
 
-    //@Parameter(names=['-t','-instance-type'], description = 'Instance type')
-    @CommandLine.Option(names=['-t','--instance-type'], description = 'Instance type')
+    @Option(names=['-t','--instance-type'], description = 'Instance type',paramLabel = "Type")
     String instanceType
 
-    //@Parameter(names=['-i','-image-id'], description = 'Image ID')
-    @CommandLine.Option(names=['-i','--image-id'], description = 'Image ID')
+    @Option(names=['-i','--image-id'], description = 'Image ID',paramLabel = "ImageID")
     String imageId
 
-    //@Parameter(names=['-c', '-instance-count'], description = 'Instances count')
-    @CommandLine.Option(names=['-c', '--instance-count'], description = 'Instances count')
+    @Option(names=['-c', '--instance-count'], description = 'Instances count',paramLabel = "INT")
     int instanceCount
 
-    //@Parameter(names='-spot-price', description = 'Price for spot/preemptive instances')
-    @CommandLine.Option(names='--spot-price', description = 'Price for spot/preemptive instances')
+    @Option(names='--spot-price', description = 'Price for spot/preemptive instances')
     String spotPrice
 
-    //@Parameter(names=['-p','-profile'], description='Configuration profile')
-    @CommandLine.Option(names=['-p','--profile'], description='Configuration profile')
+    @Option(names=['-p','--profile'], description='Configuration profile',paramLabel = "Profile")
     String profile
 
-    //@Parameter(names=['-sort'], description = 'Sort price history by the specified field: type, price, zone, description')
-    @CommandLine.Option(names=['--sort'], description = 'Sort price history by the specified field: type, price, zone, description')
+    @Option(names=['--sort'], description = 'Sort price history by the specified field: type, price, zone, description',paramLabel = "Field")
     String sort
 
-    //@Parameter(names=['-F','-filter'], description = 'Filter price history by the specified field: type, price, zone, description')
-    @CommandLine.Option(names=['-F','--filter'], description = 'Filter price history by the specified field: type, price, zone, description')
+    @Option(names=['-F','--filter'], description = 'Filter price history by the specified field: type, price, zone, description',paramLabel = "Field")
     String filter
 
-    //@Parameter(names='-history', description = 'Print price history for the specified instance type')
-    @CommandLine.Option(names=['--history'], description = 'Print price history for the specified instance type')
+    @Option(names=['--history'], description = 'Print price history for the specified instance type',paramLabel = "Instance")
     String history
 
-    //@Parameter(names='-all', description = 'Print all prices and availability zones', arity = 0)
-    @CommandLine.Option(names=['--all'], description = 'Print all prices and availability zones', arity = '0')
+    @Option(names=['--all'], description = 'Print all prices and availability zones', arity = '0')
     boolean all
 
-    //@Parameter(names=['-r','-region'], description = 'The region to use. Overrides config/env settings.')
-    @CommandLine.Option(names=['-r','--region'], description = 'The region to use. Overrides config/env settings.')
+    @Option(names=['-r','--region'], description = 'The region to use. Overrides config/env settings.',paramLabel = "Region")
     String region
 
-    //@Parameter(names='-y', description = 'Skip launch confirmation')
-    @CommandLine.Option(names=['-y'], description = 'Skip launch confirmation')
+    @Option(names=['-y'], description = 'Skip launch confirmation')
     boolean yes
 
     //@Parameter
-    @CommandLine.Parameters( description = "")    //TODO mandatory? deescription?
+    @Parameters( description = "")    //TODO mandatory? deescription?
     List<String> args
 
     private CloudDriver driver

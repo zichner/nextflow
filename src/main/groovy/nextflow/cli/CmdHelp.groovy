@@ -21,14 +21,16 @@
 package nextflow.cli
 
 import groovy.transform.CompileStatic
-import picocli.CommandLine
+import picocli.CommandLine.Command
+import picocli.CommandLine.Parameters
+
 /**
  * CLI sub-command HELP
  *
  * @author Paolo Di Tommaso <paolo.ditommaso@gmail.com>
  */
 @CompileStatic
-@CommandLine.Command(name = "help", description ="Print the usage help for a command")
+@Command(name = "help", description ="Print the usage help for a command")
 class CmdHelp extends CmdBase {
 
     static final public NAME = 'help'
@@ -36,7 +38,7 @@ class CmdHelp extends CmdBase {
     @Override
     final String getName() { NAME }
 
-    @CommandLine.Parameters(arity = "0..1", description = "Command name")
+    @Parameters(arity = "0..1", description = "Command name")
     List<String> args
 
     @Override

@@ -23,7 +23,6 @@ package nextflow.cli
 import java.nio.file.Files
 import java.nio.file.Path
 
-import com.beust.jcommander.Parameter
 import groovy.json.JsonSlurper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -40,7 +39,11 @@ import nextflow.util.CustomPoolFactory
 import nextflow.util.Duration
 import nextflow.util.HistoryFile
 import org.yaml.snakeyaml.Yaml
-import picocli.CommandLine
+import picocli.CommandLine.ITypeConverter
+import picocli.CommandLine.Command
+import picocli.CommandLine.Option
+import picocli.CommandLine.Parameters
+
 /**
  * CLI sub-command RUN
  *
@@ -48,8 +51,7 @@ import picocli.CommandLine
  */
 @Slf4j
 @CompileStatic
-//@Parameters(commandDescription = "Execute a pipeline project")
-@CommandLine.Command(name = "Run", description ="Execute a pipeline project")
+@Command(name = "run", description ="Execute a pipeline project")
 class CmdRun extends CmdBase implements HubOptions {
 
     static List<String> VALID_PARAMS_FILE = ['json', 'yml', 'yaml']
@@ -59,7 +61,7 @@ class CmdRun extends CmdBase implements HubOptions {
         GParsConfig.poolFactory = new CustomPoolFactory()
     }
 
-    static class DurationConverter implements CommandLine.ITypeConverter<Long> {
+    static class DurationConverter implements ITypeConverter<Long> {
         @Override
         Long convert(String value) {
             if( !value ) throw new IllegalArgumentException()
@@ -70,153 +72,115 @@ class CmdRun extends CmdBase implements HubOptions {
 
     static final public NAME = 'run'
 
-    //@Parameter(names=['-name'], description = 'Assign a mnemonic name to the a pipeline run')
-    @CommandLine.Option(names=['--name'], description = 'Assign a mnemonic name to the a pipeline run')
+    @Option(names=['--name'], description = 'Assign a mnemonic name to the a pipeline run',paramLabel = "<String>")
     String runName
 
-    //@Parameter(names=['-lib'], description = 'Library extension path')
-    @CommandLine.Option(names=['--lib'], description = 'Library extension path')
+    @Option(names=['--lib'], description = 'Library extension path',paramLabel = "Path")
     String libPath
 
-    //@Parameter(names=['-cache'], description = 'Enable/disable processes caching', arity = 1)
-    @CommandLine.Option(names=['--cache'], description = 'Enable/disable processes caching', arity = '1')
+    @Option(names=['--cache'], description = 'Enable/disable processes caching', arity = '0..1',paramLabel = "<Boolean>")
     boolean cacheable = true
 
-    //@Parameter(names=['-resume'], description = 'Execute the script using the cached results, useful to continue executions that was stopped by an error')
-    @CommandLine.Option(names=['--resume'], description = 'Execute the script using the cached results, useful to continue executions that was stopped by an error')
+    @Option(names=['--resume'], description = 'Execute the script using the cached results, useful to continue executions that was stopped by an error',paramLabel = "<SessionID>",arity = "0..1")
     String resume
 
-    //@Parameter(names=['-ps','-pool-size'], description = 'Number of threads in the execution pool', hidden = true)
-    @CommandLine.Option(names=['-ps','--pool-size'], description = 'Number of threads in the execution pool', hidden = true)
+    @Option(names=['--ps','--pool-size'], description = 'Number of threads in the execution pool', hidden = true,paramLabel = "<Int>")
     Integer poolSize
 
-    //@Parameter(names=['-pi','-poll-interval'], description = 'Executor poll interval (duration string ending with ms|s|m)', converter = DurationConverter, hidden = true)
-    @CommandLine.Option(names=['-pi','--poll-interval'], description = 'Executor poll interval (duration string ending with ms|s|m)', converter = [DurationConverter], hidden = true)
+    @Option(names=['--pi','--poll-interval'], description = 'Executor poll interval (duration string ending with ms|s|m)', converter = [DurationConverter], hidden = true,paramLabel = "<String>")
     long pollInterval
 
-    //@Parameter(names=['-qs','-queue-size'], description = 'Max number of processes that can be executed in parallel by each executor')
-    @CommandLine.Option(names=['-qs','--queue-size'], description = 'Max number of processes that can be executed in parallel by each executor')
+    @Option(names=['--qs','--queue-size'], description = 'Max number of processes that can be executed in parallel by each executor',paramLabel = "<Int>")
     Integer queueSize
 
-    //@Parameter(names=['-test'], description = 'Test a script function with the name specified')
-    @CommandLine.Option(names=['--test'], description = 'Test a script function with the name specified')
+    @Option(names=['--test'], description = 'Test a script function with the name specified',paramLabel = "<String>")
     String test
 
-    //@Parameter(names=['-w', '-work-dir'], description = 'Directory where intermediate result files are stored')
-    @CommandLine.Option(names=['-w', '--work-dir'], description = 'Directory where intermediate result files are stored')
+    @Option(names=['-w', '--work-dir'], description = 'Directory where intermediate result files are stored',arity = '1',paramLabel = "Path")
     String workDir
 
     /**
      * Defines the parameters to be passed to the pipeline script
      */
-    //@DynamicParameter(names = '--', description = 'Set a parameter used by the pipeline', hidden = true)
-    @CommandLine.Option(names = ['--'], description = 'Set a parameter used by the pipeline', hidden = true) //TODO really?? just '--'?
+    @Option(names = ['--'], description = 'Set a parameter used by the pipeline', hidden = true)
     Map<String,String> params = new LinkedHashMap<>()
 
-    //@Parameter(names='-params-file', description = 'Load script parameters from a JSON/YAML file')
-    @CommandLine.Option(names=['--params-file'], description = 'Load script parameters from a JSON/YAML file')
+    @Option(names=['--params-file'], description = 'Load script parameters from a JSON/YAML file',paramLabel = "<File>")
     String paramsFile
 
-    //@DynamicParameter(names = ['-process.'], description = 'Set process options' )
-    @CommandLine.Option(names = ['--process'], description = 'Set process options' )
+    @Option(names = ['--process'], description = 'Set process options' ,paramLabel = "<Key:Value>")
     Map<String,String> process = [:]
 
-    //@DynamicParameter(names = ['-e.'], description = 'Add the specified variable to execution environment')
-    @CommandLine.Option(names = ['-e'], description = 'Add the specified variable to execution environment')
+    @Option(names = ['-e'], description = 'Add the specified variable to execution environment',paramLabel = "<Key:Value>")
     Map<String,String> env = [:]
 
-    //@Parameter(names = ['-E'], description = 'Exports all current system environment')
-    @CommandLine.Option(names = ['-E'], description = 'Exports all current system environment')
+    @Option(names = ['-E'], description = 'Exports all current system environment')
     boolean exportSysEnv
 
-    //@DynamicParameter(names = ['-executor.'], description = 'Set executor options', hidden = true )
-    @CommandLine.Option(names = ['--executor'], description = 'Set executor options', hidden = true )
+    @Option(names = ['--executor'], description = 'Set executor options', hidden = true,paramLabel = "<Key:Value>" )
     Map<String,String> executorOptions = [:]
 
-    //@Parameter(description = 'Project name or repository url')
-    @CommandLine.Parameters(description = 'Project name or repository url')
+    @Parameters(description = 'Project name or repository url',paramLabel = "Project_Name") //TODO arity >=1 ?? when we want arity==0?
     List<String> args
 
-    //@Parameter(names=['-r','-revision'], description = 'Revision of the project to run (either a git branch, tag or commit SHA number)')
-    @CommandLine.Option(names=['-r','--revision'], description = 'Revision of the project to run (either a git branch, tag or commit SHA number)')
+    @Option(names=['-r','--revision'], description = 'Revision of the project to run (either a git branch, tag or commit SHA number)',paramLabel = "Revision_Name")
     String revision
 
-    //@Parameter(names=['-latest'], description = 'Pull latest changes before run')
-    @CommandLine.Option(names=['--latest'], description = 'Pull latest changes before run')
+    @Option(names=['--latest'], description = 'Pull latest changes before run')
     boolean latest
 
-    //@Parameter(names='-stdin', hidden = true)
-    @CommandLine.Option(names=['--stdin'], hidden = true)
+    @Option(names=['--stdin'], hidden = true)
     boolean stdin
 
-    //@Parameter(names = ['-with-drmaa'], description = 'Enable DRMAA binding')
-    @CommandLine.Option(names = ['--with-drmaa'], description = 'Enable DRMAA binding')
+    @Option(names = ['--with-drmaa'], description = 'Enable DRMAA binding')
     String withDrmaa
 
-    //@Parameter(names = ['-with-trace'], description = 'Create processes execution tracing file')
-    @CommandLine.Option(names = ['--with-trace'], description = 'Create processes execution tracing file')
+    @Option(names = ['--with-trace'], description = 'Create processes execution tracing file',paramLabel = "<File>")
     String withTrace
 
-    //@Parameter(names = ['-with-report'], description = 'Create processes execution html report')
-    @CommandLine.Option(names = ['--with-report'], description = 'Create processes execution html report')
+    @Option(names = ['--with-report'], description = 'Create processes execution html report',paramLabel = "<File>")
     String withReport
 
-    //@Parameter(names = ['-with-timeline'], description = 'Create processes execution timeline file')
-    @CommandLine.Option(names = ['--with-timeline'], description = 'Create processes execution timeline file')
+    @Option(names = ['--with-timeline'], description = 'Create processes execution timeline file',paramLabel = "<File>")
     String withTimeline
 
-    //@Parameter(names = '-with-singularity', description = 'Enable process execution in a Singularity container')
-    @CommandLine.Option(names = ['--with-singularity'], description = 'Enable process execution in a Singularity container')
+    @Option(names = ['--with-singularity'], description = 'Enable process execution in a Singularity container',paramLabel = "Singularity_Container")
     def withSingularity
 
-    //@Parameter(names = '-with-docker', description = 'Enable process execution in a Docker container')
-    @CommandLine.Option(names = ['--with-docker'], description = 'Enable process execution in a Docker container')
+    @Option(names = ['--with-docker'], description = 'Enable process execution in a Docker container',paramLabel = "Docker_Container")
     def withDocker
 
-    //@Parameter(names = '-without-docker', description = 'Disable process execution with Docker', arity = 0)
-    @CommandLine.Option(names = ['--without-docker'], description = 'Disable process execution with Docker', arity = '0')
+    @Option(names = ['--without-docker'], description = 'Disable process execution with Docker', arity = '0')
     boolean withoutDocker
 
-    //@Parameter(names = ['-with-k8s', '-K'], description = 'Enable execution in a Kubernetes cluster')
-    @CommandLine.Option(names = ['--with-k8s', '-K'], description = 'Enable execution in a Kubernetes cluster')
+    @Option(names = ['--with-k8s', '-K'], description = 'Enable execution in a Kubernetes cluster',paramLabel = "KubernetesID")
     def withKubernetes
 
-    //@Parameter(names = '-with-mpi', hidden = true)
-    @CommandLine.Option(names = ['--with-mpi'], hidden = true)
+    @Option(names = ['--with-mpi'], hidden = true)
     boolean withMpi
 
-    //@Parameter(names = '-with-dag', description = 'Create pipeline DAG file')
-    @CommandLine.Option(names = ['--with-dag'], description = 'Create pipeline DAG file')
+    @Option(names = ['--with-dag'], description = 'Create pipeline DAG file',paramLabel = "<File>")
     String withDag
 
-    @Parameter(names = ['-bg'], arity = 0, hidden = true)
-    //TODO
-    void setBackground(boolean value) {
-        launcher.options.background = value
-    }
+    @Option(names = ['--bg'], arity = '0', hidden = true)
+    boolean backgroundFlag
 
-    //@Parameter(names=['-c','-config'], hidden = true )
-    @CommandLine.Option(names=['-c','--config'], hidden = true )
+    @Option(names=['-c','--config'], hidden = true)
     List<String> runConfig
 
-    //@DynamicParameter(names = ['-cluster.'], description = 'Set cluster options', hidden = true )
-    @CommandLine.Option(names = ['--cluster'], description = 'Set cluster options', hidden = true )
+    @Option(names = ['--cluster'], description = 'Set cluster options', hidden = true ,paramLabel = "<Key:Value>")
     Map<String,String> clusterOptions = [:]
 
-    //@Parameter(names=['-profile'], description = 'Choose a configuration profile')
-    @CommandLine.Option(names=['--profile'], description = 'Choose a configuration profile')
+    @Option(names=['--profile'], description = 'Choose a configuration profile',paramLabel = "Profile")
     String profile
 
-    //@Parameter(names=['-dump-hashes'], description = 'Dump task hash keys for debugging purpose')
-    @CommandLine.Option(names=['--dump-hashes'], description = 'Dump task hash keys for debugging purpose')
+    @Option(names=['--dump-hashes'], description = 'Dump task hash keys for debugging purpose')
     boolean dumpHashes
 
-    //@Parameter(names=['-dump-channels'], description = 'Dump channels for debugging purpose')
-    @CommandLine.Option(names=['--dump-channels'], description = 'Dump channels for debugging purpose')
+    @Option(names=['--dump-channels'], description = 'Dump channels for debugging purpose',paramLabel = "ChannelsName")
     String dumpChannels
 
-    //@Parameter(names=['-N','-with-notification'], description = 'Send a notification email on workflow completion to the specified recipients')
-    @CommandLine.Option(names=['-N','--with-notification'], description = 'Send a notification email on workflow completion to the specified recipients')
+    @Option(names=['-N','--with-notification'], description = 'Send a notification email on workflow completion to the specified recipients',paramLabel = "********")
     String withNotification
 
     @Override
@@ -224,6 +188,7 @@ class CmdRun extends CmdBase implements HubOptions {
 
     @Override
     void run() {
+        launcher.options.background = backgroundFlag
         final scriptArgs = (args?.size()>1 ? args[1..-1] : []) as List<String>
         final pipeline = stdin ? '-' : ( args ? args[0] : null )
         if( !pipeline )

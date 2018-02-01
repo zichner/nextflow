@@ -23,19 +23,19 @@ import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
 
-import com.beust.jcommander.Parameter
 import nextflow.exception.AbortOperationException
 import nextflow.extension.FilesEx
 import nextflow.file.FileHelper
 import nextflow.file.FilePatternSplitter
-import picocli.CommandLine
+import picocli.CommandLine.Command
+import picocli.CommandLine.Parameters
 
 /**
  * Implements `fs` command
  *
  * @author Paolo Di Tommaso <paolo.ditommaso@gmail.com>
  */
-@CommandLine.Command(name = "Fs", description ="") //TODO description?
+@Command(name = "fs", description ="") //TODO description?
 class CmdFs extends CmdBase implements UsageAware {
 
     static final public NAME = 'fs'
@@ -156,7 +156,7 @@ class CmdFs extends CmdBase implements UsageAware {
 
 
     //@Parameter
-    @CommandLine.Parameters(description = "")    //TODO mandatory? description?
+    @Parameters(description = "")    //TODO mandatory? description?
     List<String> args
 
     @Override

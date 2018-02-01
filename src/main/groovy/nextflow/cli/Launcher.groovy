@@ -187,7 +187,7 @@ class Launcher {
                 normalized.add(0,CmdRun.NAME)
             }
 
-            else if( current == '-resume' ) {
+            else if( current == '--resume' ) {
                 if( i<args.size() && !args[i].startsWith('-') && (args[i]=='last' || args[i] =~~ /[0-9a-f]{8}\-[0-9a-f]{4}\-[0-9a-f]{4}\-[0-9a-f]{4}\-[0-9a-f]{8}/) ) {
                     normalized << args[i++]
                 }
@@ -195,51 +195,51 @@ class Launcher {
                     normalized << 'last'
                 }
             }
-            else if( current == '-test' && (i==args.size() || args[i].startsWith('-'))) {
+            else if( current == '--test' && (i==args.size() || args[i].startsWith('-'))) {
                 normalized << '%all'
             }
 
-            else if( current == '-with-drmaa' && (i==args.size() || args[i].startsWith('-'))) {
+            else if( current == '--with-drmaa' && (i==args.size() || args[i].startsWith('-'))) {
                 normalized << '-'
             }
 
-            else if( current == '-with-trace' && (i==args.size() || args[i].startsWith('-'))) {
+            else if( current == '--with-trace' && (i==args.size() || args[i].startsWith('-'))) {
                 normalized << TraceFileObserver.DEF_FILE_NAME
             }
 
-            else if( current == '-with-report' && (i==args.size() || args[i].startsWith('-'))) {
+            else if( current == '--with-report' && (i==args.size() || args[i].startsWith('-'))) {
                 normalized << ReportObserver.DEF_FILE_NAME
             }
 
-            else if( current == '-with-timeline' && (i==args.size() || args[i].startsWith('-'))) {
+            else if( current == '--with-timeline' && (i==args.size() || args[i].startsWith('-'))) {
                 normalized << TimelineObserver.DEF_FILE_NAME
             }
 
-            else if( current == '-with-dag' && (i==args.size() || args[i].startsWith('-'))) {
+            else if( current == '--with-dag' && (i==args.size() || args[i].startsWith('-'))) {
                 normalized << GraphObserver.DEF_FILE_NAME
             }
 
-            else if( current == '-with-docker' && (i==args.size() || args[i].startsWith('-'))) {
+            else if( current == '--with-docker' && (i==args.size() || args[i].startsWith('-'))) {
                 normalized << '-'
             }
 
-            else if( current == '-with-singularity' && (i==args.size() || args[i].startsWith('-'))) {
+            else if( current == '--with-singularity' && (i==args.size() || args[i].startsWith('-'))) {
                 normalized << '-'
             }
 
-            else if( (current == '-N' || current == '-with-notification') && (i==args.size() || args[i].startsWith('-'))) {
+            else if( (current == '-N' || current == '--with-notification') && (i==args.size() || args[i].startsWith('-'))) {
                 normalized << 'true'
             }
 
-            else if( (current == '-K' || current == '-with-k8s') && (i==args.size() || args[i].startsWith('-'))) {
+            else if( (current == '-K' || current == '--with-k8s') && (i==args.size() || args[i].startsWith('-'))) {
                 normalized << 'true'
             }
 
-            else if( current == '-syslog' && (i==args.size() || args[i].startsWith('-') || allCommands.find { it.name == args[i] } )) {
+            else if( current == '--syslog' && (i==args.size() || args[i].startsWith('-') || allCommands.find { it.name == args[i] } )) {
                 normalized << 'localhost'
             }
 
-            else if( current == '-dump-channels' && (i==args.size() || args[i].startsWith('-'))) {
+            else if( current == '--dump-channels' && (i==args.size() || args[i].startsWith('-'))) {
                 normalized << '*'
             }
 
@@ -370,7 +370,8 @@ class Launcher {
         this.cliString = System.getenv('NXF_CLI')
         this.colsString = System.getenv('COLUMNS')
 
-        this.parsedCommand = commandLine.parse(args).last()
+        normalizedArgs = normalizeArgs(args)
+        this.parsedCommand = commandLine.parse(normalizedArgs as String[]).last()
         def cmd = parsedCommand.getCommand()
         if( cmd instanceof CmdBase ) {
             cmd.launcher = this

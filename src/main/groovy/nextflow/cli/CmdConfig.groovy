@@ -45,13 +45,13 @@ class CmdConfig extends CmdBase {
 
     static final public NAME = 'config'
 
-    @Parameters(description = "Project name")    //TODO is it mandatory?
+    @Parameters(description = "Project to configure",paramLabel = "Project Name")    //TODO is it mandatory?
     List<String> args = []
 
     @Option(names=['-a','--show-profiles'], description = 'Show all configuration profiles')
     boolean showAllProfiles
 
-    @Option(names=['--profile'], description = 'Choose a configuration profile')
+    @Option(names=['--profile'], description = 'Choose a configuration profile',paramLabel = "Profile")
     String profile
 
     @Option(names =['--properties'], description = 'Prints config using Java properties notation')
