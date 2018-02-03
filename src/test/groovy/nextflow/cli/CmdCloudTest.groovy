@@ -36,7 +36,7 @@ class CmdCloudTest extends Specification {
     def 'should validate the cluster name' () {
 
         given:
-        def cmd = new CmdCloud()
+        def cmd = new CmdCloudCreate()
 
         when:
         cmd.checkName('hello')
@@ -83,7 +83,7 @@ class CmdCloudTest extends Specification {
         folder.resolve('.ssh/id_rsa.pub').text = 'ssh-rsa fake'
         System.setProperty('user.home', folder.toString())
 
-        def cmd = Spy(CmdCloud)
+        def cmd = Spy(CmdCloudCreate)
         cmd.config = [ cloud: [
             imageId: 'ami-blah',
             instanceType: 'm4.xxlarge'
@@ -91,7 +91,7 @@ class CmdCloudTest extends Specification {
         cmd.driver = Mock(CloudDriver)
 
         when:
-        def config1 = cmd.makeConfig('my-cloud')
+        def config1 = cmd.makeConfig('my-cloud',null,null,null)
         then:
         with(config1) {
             clusterName == 'my-cloud'
@@ -102,11 +102,8 @@ class CmdCloudTest extends Specification {
         }
 
         when:
-        cmd.imageId = 'ami-09f9gd'
-        cmd.instanceType = 'c3.small'
-        cmd.spotPrice = '0.43'
         cmd.driverName = 'gcloud'
-        def config2 = cmd.makeConfig('your-cloud')
+        def config2 = cmd.makeConfig('your-cloud','c3.small','ami-09f9gd','0.43')
         then:
         with(config2) {
             clusterName == 'your-cloud'

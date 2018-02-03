@@ -32,13 +32,8 @@ import picocli.CommandLine.Command
  */
 @Slf4j
 @CompileStatic
-@Command(name = "list", description ="List all downloaded projects")
+@Command(name = "list", description = "List all downloaded projects", abbreviateSynopsis = true)
 class CmdList extends CmdBase {
-
-    static final public NAME = 'list'
-
-    @Override
-    final String getName() { NAME }
 
     @Override
     void run() {

@@ -44,7 +44,7 @@ import picocli.CommandLine.Parameters
  */
 @Slf4j
 @CompileStatic
-@Command(name = "log", description ="Print executions log and runtime info")
+@Command(name = "log", description ="Print executions log and runtime info", abbreviateSynopsis = true)
 class CmdLog extends CmdBase implements CacheBase {
 
     static private int MAX_LINES = 100
@@ -61,8 +61,6 @@ class CmdLog extends CmdBase implements CacheBase {
         ALL_FIELDS << 'log'
         ALL_FIELDS.sort(true)
     }
-
-    static final public NAME = 'log'
 
     @Option(names = ['-s'], description='Character used to separate column values',paramLabel = "Character")
     String sep = '\t'
@@ -101,10 +99,6 @@ class CmdLog extends CmdBase implements CacheBase {
     private Template templateScript
 
     private Map<HashCode,Boolean> printed = new HashMap<>()
-
-    @Override
-    final String getName() { NAME }
-
 
     void init() {
         CacheBase.super.init()

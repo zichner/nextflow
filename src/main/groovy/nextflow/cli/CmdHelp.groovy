@@ -30,13 +30,8 @@ import picocli.CommandLine.Parameters
  * @author Paolo Di Tommaso <paolo.ditommaso@gmail.com>
  */
 @CompileStatic
-@Command(name = "help", description ="Print the usage help for a command")
+@Command(name = "help", description = "Print command usage help", abbreviateSynopsis = true)
 class CmdHelp extends CmdBase {
-
-    static final public NAME = 'help'
-
-    @Override
-    final String getName() { NAME }
 
     @Parameters(arity = "0..1", description = "Command name")
     List<String> args
@@ -44,12 +39,6 @@ class CmdHelp extends CmdBase {
     @Override
     void run() {
         String name = args ? args[0] : null
-        def cmd = launcher.findCommand(name)
-        if( cmd ) {
-            launcher.usage(cmd)
-        }
-        else {
-            println "Unknown command: $name"
-        }
+        usage(name)
     }
 }

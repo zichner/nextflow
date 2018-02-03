@@ -40,10 +40,8 @@ import picocli.CommandLine.Parameters
  */
 @Slf4j
 @CompileStatic
-@Command(name = "config", description ="Print a project configuration")
+@Command(name = "config", description = "Print a project configuration", abbreviateSynopsis = true)
 class CmdConfig extends CmdBase {
-
-    static final public NAME = 'config'
 
     @Parameters(description = "Project to configure",paramLabel = "Project Name")    //TODO is it mandatory?
     List<String> args = []
@@ -59,9 +57,6 @@ class CmdConfig extends CmdBase {
 
     @Option(names =['--flat', '--flatten'], description = 'Print config using flat notation')
     boolean printFlatten
-
-    @Override
-    String getName() { NAME }
 
     private OutputStream stdout = System.out
 

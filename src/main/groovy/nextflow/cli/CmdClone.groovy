@@ -36,19 +36,14 @@ import picocli.CommandLine.Parameters
  */
 @Slf4j
 @CompileStatic
-@Command (name = "clone", description ="Clone a project into a folder")
+@Command (name = "clone", description = "Clone a project into a folder", abbreviateSynopsis = true)
 class CmdClone extends CmdBase implements HubOptions {
-
-    static final public NAME = 'clone'
 
     @Parameters(arity = "1..*", description = "Name of the project to clone")
     List<String> args
 
-    @Option(names=['-r'], description = 'Revision to clone - It can be a git branch, tag or revision number',paramLabel = "Revision_Name")
+    @Option(names=['-r'], description = 'Revision to clone - It can be a git branch, tag or revision number')
     String revision
-
-    @Override
-    final String getName() { NAME }
 
     @Override
     void run() {

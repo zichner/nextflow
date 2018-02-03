@@ -37,14 +37,12 @@ import picocli.CommandLine.Parameters
  * @author Paolo Di Tommaso <paolo.ditommaso@gmail.com>
  */
 @CompileStatic
-@Command (name = "info", description ="Print project and system runtime information")
+@Command (name = "info", description = "Print project and system runtime information", abbreviateSynopsis = true)
 class CmdInfo extends CmdBase {
-
-    static final public NAME = 'info'
 
     //with 0 args -> print version,modified,system,...
     @Parameters(description = 'Project name', arity = '0..1',paramLabel = "ProjectName")
-    List<String> args
+    String projectName
 
     @Option(names=['-d'], description = 'Show detailed information', arity = '0')
     boolean detailed
@@ -53,19 +51,16 @@ class CmdInfo extends CmdBase {
     boolean moreDetailed
 
     @Override
-    final String getName() { NAME }
-
-    @Override
     void run() {
         int level = moreDetailed ? 2 : ( detailed ? 1 : 0 )
-        if( !args ) {
+        if( !projectName ) {
             println getInfo(level)
             return
         }
 
-        def manager = new AssetManager(args[0])
+        def manager = new AssetManager(projectName)
         if( !manager.isLocal() )
-            throw new AbortOperationException("Unknown project `${args[0]}`")
+            throw new AbortOperationException("Unknown project `${projectName}`")
 
         println " project name: ${manager.project}"
         println " repository  : ${manager.repositoryUrl}"

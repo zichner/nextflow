@@ -35,13 +35,8 @@ import picocli.CommandLine.Parameters
  */
 @Slf4j
 @CompileStatic
-@Command(name = "view", description ="View project script file(s)")
+@Command(name = "view", description = "View project script file(s)", abbreviateSynopsis = true)
 class CmdView extends CmdBase {
-
-    static final public NAME = 'view'
-
-    @Override
-    String getName() { NAME }
 
     @Parameters(description = 'Project name', arity = '1..*',paramLabel = "Project_Name")
     List<String> args = []

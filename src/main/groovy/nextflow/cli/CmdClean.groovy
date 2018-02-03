@@ -44,10 +44,8 @@ import picocli.CommandLine.Parameters
  */
 @Slf4j
 @CompileStatic
-@Command (name = "clean", description ="Clean up project cache and work directories")
+@Command (name = "clean", description = "Clean up project cache and work directories", abbreviateSynopsis = true, showDefaultValues = true)
 class CmdClean extends CmdBase implements CacheBase {
-
-    static final public NAME = 'clean'
 
     @Option(names=['-q', '--quiet'], description = 'Do not print names of files removed', arity = '0')
     boolean quiet
@@ -73,14 +71,6 @@ class CmdClean extends CmdBase implements CacheBase {
     private CacheDB currentCacheDb
 
     private Map<HashCode, Short> dryHash = new HashMap<>()
-
-    /**
-     * @return The name of this command {@code clean}
-     */
-    @Override
-    String getName() {
-        return NAME
-    }
 
     /**
      * Command entry method

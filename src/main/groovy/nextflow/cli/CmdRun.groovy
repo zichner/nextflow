@@ -51,8 +51,10 @@ import picocli.CommandLine.Parameters
  */
 @Slf4j
 @CompileStatic
-@Command(name = "run", description ="Execute a pipeline project")
+@Command(name = "run", description = "Execute a pipeline project", abbreviateSynopsis = true)
 class CmdRun extends CmdBase implements HubOptions {
+
+    static public String NAME = 'run'
 
     static List<String> VALID_PARAMS_FILE = ['json', 'yml', 'yaml']
 
@@ -69,8 +71,6 @@ class CmdRun extends CmdBase implements HubOptions {
             return Duration.of(value).toMillis()
         }
     }
-
-    static final public NAME = 'run'
 
     @Option(names=['--name'], description = 'Assign a mnemonic name to the a pipeline run',paramLabel = "<String>")
     String runName
@@ -108,10 +108,10 @@ class CmdRun extends CmdBase implements HubOptions {
     @Option(names=['--params-file'], description = 'Load script parameters from a JSON/YAML file',paramLabel = "<File>")
     String paramsFile
 
-    @Option(names = ['--process'], description = 'Set process options' ,paramLabel = "<Key:Value>")
+    @Option(names = ['--process.'], description = 'Set process options' ,paramLabel = "<Key:Value>")
     Map<String,String> process = [:]
 
-    @Option(names = ['-e'], description = 'Add the specified variable to execution environment',paramLabel = "<Key:Value>")
+    @Option(names = ['--e.'], description = 'Add the specified variable to execution environment',paramLabel = "<Key:Value>")
     Map<String,String> env = [:]
 
     @Option(names = ['-E'], description = 'Exports all current system environment')
@@ -182,9 +182,6 @@ class CmdRun extends CmdBase implements HubOptions {
 
     @Option(names=['-N','--with-notification'], description = 'Send a notification email on workflow completion to the specified recipients',paramLabel = "********")
     String withNotification
-
-    @Override
-    final String getName() { NAME }
 
     @Override
     void run() {

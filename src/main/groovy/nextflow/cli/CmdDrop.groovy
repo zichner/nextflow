@@ -24,7 +24,6 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import nextflow.exception.AbortOperationException
 import nextflow.scm.AssetManager
-import picocli.CommandLine
 import picocli.CommandLine.Command
 import picocli.CommandLine.Option
 import picocli.CommandLine.Parameters
@@ -35,10 +34,8 @@ import picocli.CommandLine.Parameters
  */
 @Slf4j
 @CompileStatic
-@Command(name = "drop", description ="Delete the local copy of a project")
+@Command(name = "drop", description ="Delete the local copy of a project", abbreviateSynopsis = true)
 class CmdDrop extends CmdBase {
-
-    static final public NAME = 'drop'
 
     //TODO can we drop multiple projects? arity 1 or 1..*
     @Parameters(arity = "1..*", description = "Name of the project to drop",paramLabel = "ProjectName")
@@ -46,9 +43,6 @@ class CmdDrop extends CmdBase {
 
     @Option(names=['-f'], description = 'Delete the repository without taking care of local changes')
     boolean force
-
-    @Override
-    final String getName() { NAME }
 
     @Override
     void run() {

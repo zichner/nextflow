@@ -37,13 +37,8 @@ import picocli.CommandLine.Parameters
  */
 @Slf4j
 @CompileStatic
-@Command(name = "node")
+@Command(name = "node", abbreviateSynopsis = true, description = 'Launch nextflow daemon node')
 class CmdNode extends CmdBase {
-
-    static final public NAME = 'node'
-
-    @Override
-    final String getName() { NAME }
 
     @Option(names =['--cluster'],description = 'Define cluster config options',paramLabel = "Key:Value")
     Map<String,String> clusterOptions = [:]

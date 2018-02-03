@@ -27,7 +27,7 @@ import picocli.CommandLine.Option
  *
  * @author Paolo Di Tommaso <paolo.ditommaso@gmail.com>
  */
-@Command (name = "nextflow", description ="Print the options")
+@Command (name = "nextflow", description ="Print the options", abbreviateSynopsis = true)
 class CliOptions {
 
     /**

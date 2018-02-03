@@ -35,10 +35,8 @@ import picocli.CommandLine.Parameters
  */
 @Slf4j
 @CompileStatic
-@Command(name = "pull", description ="Download or update a project")
+@Command(name = "pull", description = "Download or update a project", abbreviateSynopsis = true)
 class CmdPull extends CmdBase implements HubOptions {
-
-    static final public NAME = 'pull'
 
     @Parameters(description = 'Project name or repository url to pull', arity = '0..1',paramLabel = "Name") // 0 bc we can call --all
     List<String> args
@@ -48,9 +46,6 @@ class CmdPull extends CmdBase implements HubOptions {
 
     @Option(names=['-r','--revision'], description = 'Revision of the project to run (either a git branch, tag or commit SHA number)',paramLabel = "RevisionID")
     String revision
-
-    @Override
-    final String getName() { NAME }
 
     /* only for testing purpose */
     protected File root

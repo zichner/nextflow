@@ -21,8 +21,6 @@
 package nextflow.k8s
 import java.nio.file.NoSuchFileException
 
-import com.beust.jcommander.DynamicParameter
-import com.beust.jcommander.Parameter
 import com.google.common.hash.Hashing
 import groovy.util.logging.Slf4j
 import nextflow.Const
@@ -37,6 +35,8 @@ import nextflow.scm.AssetManager
 import nextflow.scm.ProviderConfig
 import nextflow.util.ConfigHelper
 import org.codehaus.groovy.runtime.MethodClosure
+import picocli.CommandLine
+
 /**
  * Configure and submit the execution of pod running the Nextlow main application
  *
@@ -237,7 +237,7 @@ class K8sDriverLauncher {
         }
         field.setAccessible(true)
         if( field.get(cmd) ) {
-            def param = field.getAnnotation(Parameter)
+            def param = field.getAnnotation(CommandLine.Option)
             def opt = param.names() ? param.names()[0] : "-$name"
             abort(opt)
         }
@@ -263,17 +263,17 @@ class K8sDriverLauncher {
         field.setAccessible(true)
         def val = field.get(cmd)
         if( ( eval ? eval(val) : val ) ) {
-            def param = field.getAnnotation(Parameter)
-            if( param ) {
-                result << "${param.names()[0]} ${val}"
+            def param = field.getAnnotation(CommandLine.Option)
+            if( !param )
                 return
-            }
 
-            param = field.getAnnotation(DynamicParameter)
-            if( param && val instanceof Map ) {
+            if( val instanceof Map ) {
                 val.each { k,v ->
                     result << "${param.names()[0]}$k $v"
                 }
+            }
+            else {
+                result << "${param.names()[0]} ${val}"
             }
         }
     }

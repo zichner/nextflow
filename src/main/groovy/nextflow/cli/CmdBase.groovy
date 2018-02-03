@@ -20,7 +20,10 @@
 
 package nextflow.cli
 
+import groovy.transform.PackageScope
+import picocli.CommandLine
 import picocli.CommandLine.Option
+import picocli.CommandLine.Command
 /**
  * Implement command shared methods
  *
@@ -30,12 +33,48 @@ abstract class CmdBase implements Runnable {
 
     private Launcher launcher
 
-    abstract String getName()
+    String getName() {
+        this.class.getAnnotation(Command)?.name()
+    }
 
     Launcher getLauncher() { launcher }
 
     void setLauncher( Launcher value ) { this.launcher = value }
 
-    @Option(names=['-h','-?','--help'], description = 'Print the command usage', arity = '0', usageHelp = true)
+    @Option(names=['-h','--help'], description = 'Print the command usage', arity = '0', usageHelp = true)
     boolean help
+
+    @PackageScope
+    List<? extends CmdBase> getSubCommands() { Collections.emptyList() }
+
+    @PackageScope
+    void addToCommand(CommandLine parent) {
+        final name = getName()
+        if( !name )
+            throw new IllegalStateException("Make sure command ${this.class.simpleName} defines a name attibute using the @Command annotation")
+        final children = getSubCommands()
+        if( !children ) {
+            parent.addSubcommand(name, this)
+        }
+        else {
+            final cmd = new CommandLine(this)
+            for( CmdBase it : children )
+                it.addToCommand(cmd)
+            parent.addSubcommand(name, cmd)
+        }
+    }
+
+    protected void usage(String cmdName) {
+        def cmd = launcher.findCommand(cmdName)
+        if( cmd ) {
+            launcher.usage(cmd)
+        }
+        else {
+            println "Unknown command: $cmdName"
+        }
+    }
+
+    protected void usage() {
+        usage(this.getName())
+    }
 }

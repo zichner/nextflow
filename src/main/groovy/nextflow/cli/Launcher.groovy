@@ -22,13 +22,6 @@ package nextflow.cli
 
 import static nextflow.Const.*
 
-import java.lang.reflect.Field
-
-import com.beust.jcommander.DynamicParameter
-import com.beust.jcommander.Parameter
-import com.beust.jcommander.ParameterException
-import com.beust.jcommander.Parameters
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import groovy.util.logging.Slf4j
@@ -91,21 +84,21 @@ class Launcher {
     protected void init() {
         options = new CliOptions()
         commandLine = new CommandLine(options)
-                .addSubcommand("clean",  new CmdClean())
-                .addSubcommand("clone",  new CmdClone())
-                .addSubcommand("cloud",  new CmdCloud())
-                .addSubcommand("fs",     new CmdFs())
-                .addSubcommand("info",   new CmdInfo())
-                .addSubcommand("list",   new CmdList())
-                .addSubcommand("log",    new CmdLog())
-                .addSubcommand("pull",   new CmdPull())
-                .addSubcommand("run",    new CmdRun())
-                .addSubcommand("drop",   new CmdDrop())
-                .addSubcommand("config", new CmdConfig())
-                .addSubcommand("node",   new CmdNode())
-                .addSubcommand("view",   new CmdView())
-                .addSubcommand("help",   new CmdHelp())
-                .addSubcommand("update", new CmdSelfUpdate())
+        new CmdClean().addToCommand(commandLine)
+        new CmdClone().addToCommand(commandLine)
+        new CmdCloud().addToCommand(commandLine)
+        new CmdFs().addToCommand(commandLine)
+        new CmdInfo().addToCommand(commandLine)
+        new CmdList().addToCommand(commandLine)
+        new CmdLog().addToCommand(commandLine)
+        new CmdPull().addToCommand(commandLine)
+        new CmdRun().addToCommand(commandLine)
+        new CmdDrop().addToCommand(commandLine)
+        new CmdConfig().addToCommand(commandLine)
+        new CmdNode().addToCommand(commandLine)
+        new CmdView().addToCommand(commandLine)
+        new CmdHelp().addToCommand(commandLine)
+        new CmdSelfUpdate().addToCommand(commandLine)
     }
 
     protected List<CmdBase> getAllCommands() {
@@ -243,11 +236,11 @@ class Launcher {
                 normalized << '*'
             }
 
-            else if( current ==~ /^\-\-[a-zA-Z\d].*/ && !current.contains('=') ) {
-                current += '='
-                current += ( i<args.size() && isValue(args[i]) ? args[i++] : 'true' )
-                normalized[-1] = current
-            }
+//            else if( current ==~ /^\-\-[a-zA-Z\d].*/ && !current.contains('=') ) {
+//                current += '='
+//                current += ( i<args.size() && isValue(args[i]) ? args[i++] : 'true' )
+//                normalized[-1] = current
+//            }
 
             else if( current ==~ /^\-process\..+/ && !current.contains('=')) {
                 current += '='
@@ -297,61 +290,16 @@ class Launcher {
         command.usage(System.out)
     }
 
-    @Deprecated
-    @CompileDynamic
-    protected void printOptions(Class clazz) {
-        List params = []
-        for( Field f : clazz.getDeclaredFields() ) {
-            def p = f.getAnnotation(Parameter)
-            if(!p)
-                p = f.getAnnotation(DynamicParameter)
-
-            if( p && !p.hidden() && p.description() && p.names() )
-                params.add(p)
-
-        }
-
-        params.sort(true) { it -> it.names()[0] }
-
-        println "Options:"
-        for( def p : params ) {
-            println "  ${p.names().join(', ')}"
-            println "     ${p.description()}"
-        }
-    }
-
-    @Deprecated
-    protected void printCommands(List<CmdBase> commands) {
-        println "\nCommands:"
-
-        int len = 0
-        def all = new TreeMap<String,String>()
-        new ArrayList<CmdBase>(commands).each {
-            def description = it.getClass().getAnnotation(Parameters)?.commandDescription()
-            if( description ) {
-                all[it.name] = description
-                if( it.name.size()>len ) len = it.name.size()
-            }
-        }
-
-        all.each { String name, String desc ->
-            print '  '
-            print name.padRight(len)
-            print '   '
-            println desc
-        }
-        println ''
-    }
 
     Launcher command( String[] args ) {
         /*
          * CLI argument parsing
          */
         try {
-            parsePicoMainArgs(args)
+            parseMainArgs(args)
             LoggerHelper.configureLogger(this)
         }
-        catch( ParameterException e ) {
+        catch( CommandLine.PicocliException e ) {
             // print command line parsing errors
             // note: use system.err.println since if an exception is raised
             //       parsing the cli params the logging is not configured
@@ -366,7 +314,7 @@ class Launcher {
         return this
     }
 
-    Launcher parsePicoMainArgs( String[] args) {
+    Launcher parseMainArgs(String[] args) {
         this.cliString = System.getenv('NXF_CLI')
         this.colsString = System.getenv('COLUMNS')
 
