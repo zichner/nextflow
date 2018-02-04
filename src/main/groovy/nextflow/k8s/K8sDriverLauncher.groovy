@@ -99,19 +99,13 @@ class K8sDriverLauncher {
     private String paramsFile
 
     /**
-     * Workflow script positional parameters
-     */
-    private List<String> args
-
-    /**
      * Launcher entry point. Set-up the environment and create a pod that run the Nextflow
      * application (which in turns executed each task as a pod)
      *
      * @param name Workflow project entry name
      * @param args Workflow script positional parameters
      */
-    void run(String name, List<String> args) {
-        this.args = args
+    void run(String name) {
         this.pipelineName = name
         this.config = makeConfig(pipelineName)
         this.client = createK8sClient(config)

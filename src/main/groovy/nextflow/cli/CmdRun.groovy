@@ -72,140 +72,140 @@ class CmdRun extends CmdBase implements HubOptions {
         }
     }
 
-    @Option(names=['--name'], description = 'Assign a mnemonic name to the a pipeline run',paramLabel = "<String>")
+    @Option(names=['--name'], description = 'assign a mnemonic name to the a pipeline run', paramLabel = "<name>")
     String runName
 
-    @Option(names=['--lib'], description = 'Library extension path',paramLabel = "Path")
+    @Option(names=['--lib'], description = 'library extension path', paramLabel = "<lib-path>")
     String libPath
 
-    @Option(names=['--cache'], description = 'Enable/disable processes caching', arity = '0..1',paramLabel = "<Boolean>")
+    @Option(names=['--cache'], description = 'enable/disable processes caching', arity = '0..1')
     boolean cacheable = true
 
-    @Option(names=['--resume'], description = 'Execute the script using the cached results, useful to continue executions that was stopped by an error',paramLabel = "<SessionID>",arity = "0..1")
+    @Option(names=['--resume'], description = 'execute the script using the cached results, useful to continue executions that was stopped by an error', arity = "0..1", paramLabel = "<session-id>")
     String resume
 
-    @Option(names=['--ps','--pool-size'], description = 'Number of threads in the execution pool', hidden = true,paramLabel = "<Int>")
+    @Option(names=['--ps','--pool-size'], description = 'number of threads in the execution pool', paramLabel = "<n>")
     Integer poolSize
 
-    @Option(names=['--pi','--poll-interval'], description = 'Executor poll interval (duration string ending with ms|s|m)', converter = [DurationConverter], hidden = true,paramLabel = "<String>")
+    @Option(names=['--pi','--poll-interval'], description = 'executor poll interval (duration string ending with ms|s|m)', converter = [DurationConverter], paramLabel = "<duration>")
     long pollInterval
 
-    @Option(names=['--qs','--queue-size'], description = 'Max number of processes that can be executed in parallel by each executor',paramLabel = "<Int>")
+    @Option(names=['--qs','--queue-size'], description = 'max number of processes that can be executed in parallel by each executor', paramLabel = "<n>")
     Integer queueSize
 
-    @Option(names=['--test'], description = 'Test a script function with the name specified',paramLabel = "<String>")
+    @Option(names=['--test'], description = 'test a script function with the name specified', paramLabel = "<function-name>")
     String test
 
-    @Option(names=['-w', '--work-dir'], description = 'Directory where intermediate result files are stored',arity = '1',paramLabel = "Path")
+    @Option(names=['-w', '--work-dir'], description = 'directory where intermediate result files are stored',arity = '1', paramLabel = "<work-dir>")
     String workDir
 
-    /**
-     * Defines the parameters to be passed to the pipeline script
-     */
-    @Option(names = ['--'], description = 'Set a parameter used by the pipeline', hidden = true)
-    Map<String,String> params = new LinkedHashMap<>()
 
-    @Option(names=['--params-file'], description = 'Load script parameters from a JSON/YAML file',paramLabel = "<File>")
+    @Option(names=['--params-file'], description = 'load script parameters from a JSON/YAML file',paramLabel = "<file-name>")
     String paramsFile
 
-    @Option(names = ['--process.'], description = 'Set process options' ,paramLabel = "<Key:Value>")
+    @Option(names = ['--process.'], description = 'set process options')
     Map<String,String> process = [:]
 
-    @Option(names = ['--e.'], description = 'Add the specified variable to execution environment',paramLabel = "<Key:Value>")
+    @Option(names = ['--e.'], description = 'add the specified variable to execution environment')
     Map<String,String> env = [:]
 
-    @Option(names = ['-E'], description = 'Exports all current system environment')
+    @Option(names = ['-E'], description = 'exports all current system environment')
     boolean exportSysEnv
 
-    @Option(names = ['--executor'], description = 'Set executor options', hidden = true,paramLabel = "<Key:Value>" )
+    @Option(names = ['--executor'], description = 'det executor options', hidden = true)
     Map<String,String> executorOptions = [:]
 
-    @Parameters(description = 'Project name or repository url',paramLabel = "Project_Name") //TODO arity >=1 ?? when we want arity==0?
-    List<String> args
-
-    @Option(names=['-r','--revision'], description = 'Revision of the project to run (either a git branch, tag or commit SHA number)',paramLabel = "Revision_Name")
+    @Option(names=['-r','--revision'], description = 'revision of the project to run (either a git branch, tag or commit SHA number)' )
     String revision
 
-    @Option(names=['--latest'], description = 'Pull latest changes before run')
+    @Option(names=['--latest'], description = 'pull latest changes before run')
     boolean latest
 
     @Option(names=['--stdin'], hidden = true)
     boolean stdin
 
-    @Option(names = ['--with-drmaa'], description = 'Enable DRMAA binding')
+    @Option(names = ['--with-drmaa'], description = 'enable DRMAA binding')
     String withDrmaa
 
-    @Option(names = ['--with-trace'], description = 'Create processes execution tracing file',paramLabel = "<File>")
+    @Option(names = ['--with-trace'], description = 'create processes execution tracing file')
     String withTrace
 
-    @Option(names = ['--with-report'], description = 'Create processes execution html report',paramLabel = "<File>")
+    @Option(names = ['--with-report'], description = 'create processes execution html report')
     String withReport
 
-    @Option(names = ['--with-timeline'], description = 'Create processes execution timeline file',paramLabel = "<File>")
+    @Option(names = ['--with-timeline'], description = 'create processes execution timeline file')
     String withTimeline
 
-    @Option(names = ['--with-singularity'], description = 'Enable process execution in a Singularity container',paramLabel = "Singularity_Container")
+    @Option(names = ['--with-singularity'], description = 'enable process execution in a Singularity container')
     def withSingularity
 
-    @Option(names = ['--with-docker'], description = 'Enable process execution in a Docker container',paramLabel = "Docker_Container")
+    @Option(names = ['--with-docker'], description = 'enable process execution in a Docker container')
     def withDocker
 
-    @Option(names = ['--without-docker'], description = 'Disable process execution with Docker', arity = '0')
+    @Option(names = ['--without-docker'], description = 'disable process execution with Docker', arity = '0')
     boolean withoutDocker
 
-    @Option(names = ['--with-k8s', '-K'], description = 'Enable execution in a Kubernetes cluster',paramLabel = "KubernetesID")
+    @Option(names = ['--with-k8s', '-K'], description = 'enable execution in a Kubernetes cluster')
     def withKubernetes
 
     @Option(names = ['--with-mpi'], hidden = true)
     boolean withMpi
 
-    @Option(names = ['--with-dag'], description = 'Create pipeline DAG file',paramLabel = "<File>")
+    @Option(names = ['--with-dag'], description = 'create pipeline DAG file')
     String withDag
 
-    @Option(names = ['--bg'], arity = '0', hidden = true)
+    @Option(names = ['--bg'], arity = '0', description = 'launch the execution in background')
     boolean backgroundFlag
 
     @Option(names=['-c','--config'], hidden = true)
     List<String> runConfig
 
-    @Option(names = ['--cluster'], description = 'Set cluster options', hidden = true ,paramLabel = "<Key:Value>")
+    @Option(names = ['--cluster'], description = 'set cluster options', hidden = true )
     Map<String,String> clusterOptions = [:]
 
-    @Option(names=['--profile'], description = 'Choose a configuration profile',paramLabel = "Profile")
+    @Option(names=['--profile'], description = 'choose a configuration profile', paramLabel = "<profile-name>")
     String profile
 
-    @Option(names=['--dump-hashes'], description = 'Dump task hash keys for debugging purpose')
+    @Option(names=['--dump-hashes'], description = 'dump task hash keys for debugging purpose')
     boolean dumpHashes
 
-    @Option(names=['--dump-channels'], description = 'Dump channels for debugging purpose',paramLabel = "ChannelsName")
+    @Option(names=['--dump-channels'], description = 'dump channels for debugging purpose', paramLabel = "<channel-names>")
     String dumpChannels
 
-    @Option(names=['-N','--with-notification'], description = 'Send a notification email on workflow completion to the specified recipients',paramLabel = "********")
+    @Option(names=['-N','--with-notification'], description = 'send a notification email on workflow completion to the specified recipients', paramLabel = "<email-address>")
     String withNotification
+
+    @Parameters(index = '0', arity = '1', description = 'workflow to execute, either a script file or a project repository')
+    String workflow
+
+    @Parameters(index = '1', arity = '0..*', description = 'workflow parameters')
+    List<String> args
+
+    /**
+     * Defines the parameters to be passed to the pipeline script
+     */
+    Map<String,String> params
 
     @Override
     void run() {
-        launcher.options.background = backgroundFlag
-        final scriptArgs = (args?.size()>1 ? args[1..-1] : []) as List<String>
-        final pipeline = stdin ? '-' : ( args ? args[0] : null )
-        if( !pipeline )
-            throw new AbortOperationException("No project name was specified")
+        if( !test )
+            params = makeParams(args)
 
         if( withDocker && withoutDocker )
-            throw new AbortOperationException("Command line options `-with-docker` and `-without-docker` cannot be specified at the same time")
+            throw new AbortOperationException("Command line options `--with-docker` and `--without-docker` cannot be specified at the same time")
 
         checkRunName()
 
         if( withKubernetes ) {
             // that's another story
-            new K8sDriverLauncher(cmd: this, runName: runName).run(pipeline, scriptArgs)
+            new K8sDriverLauncher(cmd: this, runName: runName).run(workflow)
             return
         }
 
         log.info "N E X T F L O W  ~  version ${Const.APP_VER}"
 
         // -- specify the arguments
-        final scriptFile = getScriptFile(pipeline)
+        final scriptFile = getScriptFile(workflow)
 
         // create the config object
         final config = new ConfigBuilder()
@@ -219,7 +219,7 @@ class CmdRun extends CmdBase implements HubOptions {
         runner.profile = profile
 
         if( this.test ) {
-            runner.test(this.test, scriptArgs)
+            runner.test(this.test, args)
             return
         }
 
@@ -230,7 +230,7 @@ class CmdRun extends CmdBase implements HubOptions {
         runner.verifyAndTrackHistory(launcher.cliString, runName)
 
         // -- run it!
-        runner.execute(scriptArgs)
+        runner.execute()
     }
 
     private void checkRunName() {
@@ -396,6 +396,47 @@ class CmdRun extends CmdBase implements HubOptions {
         catch( Exception e ) {
             throw new AbortOperationException("Cannot parse params file: $file", e)
         }
+    }
+
+    protected Map<String,String> makeParams(List<String> args) {
+        List<String> normalise = new ArrayList<>(args.size()*2)
+        Map<String,String> result = [:]
+
+        for( String item : args ) {
+            int p = item.indexOf('=')
+            if( p!=-1 && item.startsWith('--') ) {
+                normalise << item.substring(0,p)
+                normalise << item.substring(p+1)
+            }
+            else {
+                normalise << item
+            }
+        }
+
+        String current=null
+        for( String item : normalise ) {
+            if( item =~ /^--\w/ ) {
+                current = item.substring(2)
+            }
+            else if( current ) {
+                result.put(current, item)
+//                def value = result.get(current)
+//                if( value==null ) {
+//                    result.put(current, item)
+//                }
+//                else if( value instanceof List ) {
+//                    value.add(item)
+//                }
+//                else {
+//                    result.put( current, [value, item] )
+//                }
+            }
+            else {
+                throw new IllegalArgumentException("Not a valid workflow parameter: $item")
+            }
+        }
+
+        return result
     }
 
 }

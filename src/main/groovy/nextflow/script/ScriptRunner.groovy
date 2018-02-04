@@ -19,7 +19,6 @@
  */
 
 package nextflow.script
-import static nextflow.util.ConfigHelper.parseValue
 
 import java.nio.file.Path
 
@@ -148,7 +147,7 @@ class ScriptRunner {
      * @return The result as returned by the {@code #run} method
      */
 
-    def execute( List<String> args = null ) {
+    def execute( ) {
         assert scriptText
 
         // init session
@@ -158,7 +157,7 @@ class ScriptRunner {
         session.start()
         try {
             // parse the script
-            script = parseScript(scriptText, args)
+            script = parseScript(scriptText)
             // validate the config
             validate()
             // run the code
@@ -185,15 +184,14 @@ class ScriptRunner {
      * @param methodName
      * @param args
      */
-    def test ( String methodName, List<String> args = null ) {
+    def test ( String methodName, values ) {
         assert scriptText
         assert methodName
 
         // init session
         session.init(scriptFile.main)
 
-        script = parseScript(scriptText, args)
-        def values = args ? args.collect { parseValue(it) } : null
+        script = parseScript(scriptText)
 
         def methodsToTest
         if ( methodName == '%all' ) {
@@ -246,14 +244,14 @@ class ScriptRunner {
         }
     }
 
-    protected BaseScript parseScript( File file, List<String> args = null ) {
+    protected BaseScript parseScript( File file  ) {
         assert file
-        parseScript( file.text, args )
+        parseScript( file.text )
     }
 
-    protected BaseScript parseScript( String scriptText, List<String> args = null) {
+    protected BaseScript parseScript( String scriptText ) {
         log.debug "> Script parsing"
-        session.binding.setArgs( new ArgsList(args) )
+        //session.binding.setArgs( new ArgsList(args) )
         session.binding.setParams( (Map)session.config.params )
         // TODO add test for this property
         session.binding.setVariable( 'baseDir', session.baseDir )

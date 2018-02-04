@@ -22,7 +22,7 @@ package nextflow.cli
 
 import java.nio.file.Files
 
-import spock.lang.Ignore
+import picocli.CommandLine
 import spock.lang.Specification
 import test.OutputCapture
 /**
@@ -46,8 +46,6 @@ class LauncherTest extends Specification {
         then:
         assert launcher.options.version
         assert launcher.fullVersion
-
-
     }
 
     def 'should return `help` command' () {
@@ -120,33 +118,36 @@ class LauncherTest extends Specification {
 
 
     def 'should return `run` command'() {
-        when:
-        def launcher = new Launcher().parseMainArgs('run', '--hub', 'bitbucket', '--user','xx:yy', 'xxx')
-        then:
-        launcher.parsedCommand.command instanceof CmdRun
-        launcher.parsedCommand.command.args == ['xxx']
-        launcher.parsedCommand.command.hubProvider == 'bitbucket'
-        launcher.parsedCommand.command.hubUser == 'xx'
-        launcher.parsedCommand.command.hubPassword == 'yy'
+        given:
+        CmdRun cmd
 
         when:
-        launcher = new Launcher().parseMainArgs('run', '--hub', 'github', 'alpha')
+        cmd = new Launcher() .parseMainArgs('run', 'foo') .command
         then:
-        launcher.parsedCommand.command instanceof CmdRun
-        launcher.parsedCommand.command.args == ['alpha']
-        launcher.parsedCommand.command.hubProvider == 'github'
+        cmd.workflow == 'foo'
 
         when:
-        launcher = new Launcher().parseMainArgs('run', 'script.nf', '--alpha', '0', '--omega', '9')
+        cmd = new Launcher() .parseMainArgs('run', 'foo', '--xx', 'yy') .command
         then:
-        launcher.parsedCommand.command instanceof CmdRun
-        launcher.parsedCommand.command.params.'alpha' == '0'
-        launcher.parsedCommand.command.params.'omega' == '9'
+        cmd.workflow == 'foo'
+        cmd.args == ['--xx']
+
+        when:
+        cmd = new Launcher() .parseMainArgs('run', '--hub', 'bitbucket', '--user','xx:yy', 'xxx') .command
+        then:
+        cmd.workflow == 'xxx'
+        cmd.hubProvider == 'bitbucket'
+        cmd.hubUser == 'xx'
+        cmd.hubPassword == 'yy'
+
+//        when:
+//        cmd = new Launcher().parseMainArgs('run', 'script.nf', '--alpha', '0', '--omega', '9') .command
+//        then:
+//        cmd.args == ['--alpha','0','--omega','9']
 
     }
 
 
-    @Ignore
     def 'should normalise command line options' () {
 
         given:
@@ -163,11 +164,11 @@ class LauncherTest extends Specification {
         launcher.normalizeArgs('x','--test','alpha') == ['x','--test','alpha']
         launcher.normalizeArgs('x','--test','--other') == ['x','--test','%all','--other']
 
-        launcher.normalizeArgs('--alpha=1') == ['--alpha=1']
-        launcher.normalizeArgs('--alpha','1') == ['--alpha=1']
-        launcher.normalizeArgs('run','--x') == ['run', '--x=true']
-        launcher.normalizeArgs('run','--x','--y') == ['run', '--x=true', '--y=true']
-        launcher.normalizeArgs('run','--x','--y', '-1', '--z') == ['run', '--x=true', '--y=-1', '--z=true']
+//        launcher.normalizeArgs('--alpha=1') == ['--alpha=1']
+//        launcher.normalizeArgs('--alpha','1') == ['--alpha=1']
+//        launcher.normalizeArgs('run','--x') == ['run', '--x=true']
+//        launcher.normalizeArgs('run','--x','--y') == ['run', '--x=true', '--y=true']
+//        launcher.normalizeArgs('run','--x','--y', '-1', '--z') == ['run', '--x=true', '--y=-1', '--z=true']
 
         launcher.normalizeArgs('-x', '1', 'script.nf', '--long', 'v1', '--more', 'v2', '--flag') == ['-x','1','script.nf','--long=v1','--more=v2','--flag=true']
 
@@ -300,6 +301,27 @@ class LauncherTest extends Specification {
         System.setProperty('http.proxyPort', httpProxyPort ?: '')
         System.setProperty('https.proxyHost', httpsProxyHost ?: '')
         System.setProperty('https.proxyPort', httpsProxyPort ?: '')
+    }
+
+
+    static class Sample {
+        @CommandLine.Option(names = "--alpha") boolean alpha;
+        @CommandLine.Parameters(index = '0', arity = '1') String name
+        @CommandLine.Parameters(index = '1..*', arity = '*') List<String> params;
+    }
+
+
+    def 'should pass unknown parameters' () {
+        given:
+        def cmd = new CommandLine(new Sample())
+
+        when:
+        def sample = cmd.parse('--alpha', 'ciao', 'xx', '--yy').last().command as Sample
+    
+        then:
+        sample.alpha
+        sample.name == 'ciao'
+        sample.params == ['xx','--yy']
     }
 
 

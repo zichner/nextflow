@@ -60,9 +60,8 @@ class Launcher {
 
     private boolean fullVersion
 
-    @Deprecated
-    //  with picocli this is not necessary any more
-    private CmdBase command
+    @PackageScope
+    <T extends CmdBase> T getCommand() { parsedCommand.getCommand() }
 
     private String cliString
 
@@ -101,40 +100,43 @@ class Launcher {
         new CmdSelfUpdate().addToCommand(commandLine)
     }
 
+    @Deprecated
     protected List<CmdBase> getAllCommands() {
         commandLine.getSubcommands().values().collect { cli -> cli.getCommand() as CmdBase }
     }
 
-    /**
-     * Create the Jcommander 'interpreter' and parse the command line arguments
-     */
-//    @Deprecated
-//    @PackageScope
-//    Launcher parseMainArgs(String... args) {
-//        this.cliString = System.getenv('NXF_CLI')
-//        this.colsString = System.getenv('COLUMNS')
-//
+    Launcher parseMainArgs(String[] args) {
+        this.cliString = System.getenv('NXF_CLI')
+        this.colsString = System.getenv('COLUMNS')
 //        def cols = getColumns()
 //        if( cols )
 //            jcommander.setColumnSize(cols)
-//
-//        normalizedArgs = normalizeArgs(args)
-//        jcommander.parse( normalizedArgs as String[] )
-//        fullVersion = '-version' in normalizedArgs
-//        command = allCommands.find { it.name == jcommander.getParsedCommand()  }
-//        // whether is running a daemon
-//        daemonMode = command instanceof CmdNode
-//        // set the log file name
-//        checkLogFileName()
-//
-//        return this
-//    }
+
+        normalizedArgs = normalizeArgs(args)
+        this.parsedCommand = commandLine.parse(args).last()
+        def cmd = parsedCommand.getCommand()
+        if( cmd instanceof CmdBase ) {
+            cmd.launcher = this
+            if( cmd instanceof CmdRun )
+                options.background = (cmd as CmdRun).backgroundFlag
+        }
+        else if( cmd instanceof CliOptions ) {
+            fullVersion = '--version' in normalizedArgs
+        }
+
+        // whether is running a daemon
+        daemonMode = parsedCommand.command instanceof CmdNode
+        // set the log file name
+        checkLogFileName()
+
+        return this
+    }
 
     private void checkLogFileName() {
         if( !options.logFile ) {
             if( isDaemon() )
                 options.logFile = '.node-nextflow.log'
-            else if( command instanceof CmdRun || options.debug || options.trace )
+            else if( parsedCommand.command instanceof CmdRun || options.debug || options.trace )
                 options.logFile = ".nextflow.log"
         }
     }
@@ -314,45 +316,6 @@ class Launcher {
         return this
     }
 
-    Launcher parseMainArgs(String[] args) {
-        this.cliString = System.getenv('NXF_CLI')
-        this.colsString = System.getenv('COLUMNS')
-
-        normalizedArgs = normalizeArgs(args)
-        this.parsedCommand = commandLine.parse(normalizedArgs as String[]).last()
-        def cmd = parsedCommand.getCommand()
-        if( cmd instanceof CmdBase ) {
-            cmd.launcher = this
-            command = cmd
-        }
-
-        // whether is running a daemon
-        daemonMode = parsedCommand.command instanceof CmdNode
-        // set the log file name
-        checkLogFileName()
-
-        return this
-    }
-
-//    protected void checkForHelp() {
-//        if( options.help || !command || command.help ) {
-//            if( command instanceof UsageAware ) {
-//                (command as UsageAware).usage()
-//                // reset command to null to skip default execution
-//                command = null
-//                return
-//            }
-//
-//            // replace the current command with the `help` command
-//            def target = command?.name
-//            command = allCommands.find { it instanceof CmdHelp }
-//            if( target && command ) {
-//                command.launcher = this
-//                (command as CmdHelp).args = [target]
-//            }
-//        }
-//
-//    }
 
     /**
      * Launch the pipeline execution

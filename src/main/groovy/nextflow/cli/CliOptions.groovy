@@ -67,7 +67,7 @@ class CliOptions {
      * Print out the 'help' and exit
      */
     @Option(names=['-h','--help'], description = 'Print this help', usageHelp = true)
-    boolean help //TODO we can use the 'usageHelp' @link http://picocli.info/#_help_options
+    boolean help
 
     @Option(names=['-q','--quite'], description = 'Do not print information messages')
     boolean quiet
