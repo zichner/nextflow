@@ -20,10 +20,9 @@
 
 package nextflow.cli
 
-import groovy.transform.PackageScope
 import picocli.CommandLine
-import picocli.CommandLine.Option
 import picocli.CommandLine.Command
+import picocli.CommandLine.Option
 /**
  * Implement command shared methods
  *
@@ -44,23 +43,24 @@ abstract class CmdBase implements Runnable {
     @Option(names=['-h','--help'], description = 'Print the command usage', arity = '0', usageHelp = true)
     boolean help
 
-    @PackageScope
-    List<? extends CmdBase> getSubCommands() { Collections.emptyList() }
+        protected List<? extends CmdBase> getSubCommands() { Collections.emptyList() }
 
-    @PackageScope
-    void addToCommand(CommandLine parent) {
+    protected CommandLine register(CommandLine parent) {
         final name = getName()
         if( !name )
             throw new IllegalStateException("Make sure command ${this.class.simpleName} defines a name attibute using the @Command annotation")
         final children = getSubCommands()
         if( !children ) {
-            parent.addSubcommand(name, this)
+            def cmd = new CommandLine(this)
+            parent.addSubcommand(name, cmd)
+            return cmd
         }
         else {
             final cmd = new CommandLine(this)
             for( CmdBase it : children )
-                it.addToCommand(cmd)
+                it.register(cmd)
             parent.addSubcommand(name, cmd)
+            return cmd
         }
     }
 

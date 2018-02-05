@@ -81,24 +81,33 @@ class Launcher {
     }
 
     protected void init() {
+        final commands = [
+                CmdClean,
+                CmdClone,
+                CmdCloud,
+                CmdFs,
+                CmdInfo,
+                CmdList,
+                CmdLog,
+                CmdPull,
+                CmdRun,
+                CmdDrop,
+                CmdConfig,
+                CmdNode,
+                CmdView,
+                CmdHelp,
+                CmdSelfUpdate
+        ]
+
         options = new CliOptions()
         commandLine = new CommandLine(options)
-        new CmdClean().addToCommand(commandLine)
-        new CmdClone().addToCommand(commandLine)
-        new CmdCloud().addToCommand(commandLine)
-        new CmdFs().addToCommand(commandLine)
-        new CmdInfo().addToCommand(commandLine)
-        new CmdList().addToCommand(commandLine)
-        new CmdLog().addToCommand(commandLine)
-        new CmdPull().addToCommand(commandLine)
-        new CmdRun().addToCommand(commandLine)
-        new CmdDrop().addToCommand(commandLine)
-        new CmdConfig().addToCommand(commandLine)
-        new CmdNode().addToCommand(commandLine)
-        new CmdView().addToCommand(commandLine)
-        new CmdHelp().addToCommand(commandLine)
-        new CmdSelfUpdate().addToCommand(commandLine)
+
+        for( Class<? extends CmdBase> clazz : commands) {
+            def cmd = clazz.newInstance()
+            cmd.register(commandLine)
+        }
     }
+
 
     @Deprecated
     protected List<CmdBase> getAllCommands() {

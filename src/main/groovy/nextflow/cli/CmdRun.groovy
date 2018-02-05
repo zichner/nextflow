@@ -39,11 +39,11 @@ import nextflow.util.CustomPoolFactory
 import nextflow.util.Duration
 import nextflow.util.HistoryFile
 import org.yaml.snakeyaml.Yaml
-import picocli.CommandLine.ITypeConverter
+import picocli.CommandLine
 import picocli.CommandLine.Command
+import picocli.CommandLine.ITypeConverter
 import picocli.CommandLine.Option
 import picocli.CommandLine.Parameters
-
 /**
  * CLI sub-command RUN
  *
@@ -178,18 +178,24 @@ class CmdRun extends CmdBase implements HubOptions {
     @Parameters(index = '0', arity = '1', description = 'workflow to execute, either a script file or a project repository')
     String workflow
 
-    @Parameters(index = '1', arity = '0..*', description = 'workflow parameters')
-    List<String> args
-
     /**
      * Defines the parameters to be passed to the pipeline script
      */
     Map<String,String> params
 
+    private CommandLine cli
+
+    @Override
+    protected CommandLine register(CommandLine parent) {
+        this.cli = super.register(parent)
+        cli.setUnmatchedArgumentsAllowed(true)
+        return cli
+    }
+
     @Override
     void run() {
         if( !test )
-            params = makeParams(args)
+            params = makeParams( cli.getUnmatchedArguments() )
 
         if( withDocker && withoutDocker )
             throw new AbortOperationException("Command line options `--with-docker` and `--without-docker` cannot be specified at the same time")
@@ -219,7 +225,7 @@ class CmdRun extends CmdBase implements HubOptions {
         runner.profile = profile
 
         if( this.test ) {
-            runner.test(this.test, args)
+            runner.test(this.test, cli.getUnmatchedArguments() )
             return
         }
 
@@ -399,6 +405,9 @@ class CmdRun extends CmdBase implements HubOptions {
     }
 
     protected Map<String,String> makeParams(List<String> args) {
+        if( args == null )
+            return Collections.emptyMap()
+        
         List<String> normalise = new ArrayList<>(args.size()*2)
         Map<String,String> result = [:]
 

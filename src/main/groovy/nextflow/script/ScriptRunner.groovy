@@ -188,6 +188,9 @@ class ScriptRunner {
         assert scriptText
         assert methodName
 
+        if( values == null )
+            values = Collections.emptyList()
+
         // init session
         session.init(scriptFile.main)
 
