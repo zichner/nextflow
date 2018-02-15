@@ -41,7 +41,34 @@ class ReportSummary {
         mappers.time = { TraceRecord record -> record.get('realtime') as Double }
         mappers.reads = { TraceRecord record -> record.get('read_bytes') as Double }
         mappers.writes = { TraceRecord record -> record.get('write_bytes') as Double}
+
+        mappers.cpuUsage = { TraceRecord record ->
+            final Double pcpu = record.get('%cpu') as Double
+            final int ncpu = (record.get('cpus') ?: 1) as int
+            if( !pcpu )
+                return null
+            return pcpu / ncpu as Double
+        }
+
+        mappers.memUsage = { TraceRecord record ->
+            final vmem = record.get('vmem') as Double
+            final request = record.get('memory') as Long
+            if( !vmem ) return null
+            if( !request ) return null
+            return vmem / request * 100 as Double
+        }
+
+
+        mappers.timeUsage = { TraceRecord record ->
+            final realtime = record.get('realtime') as Long
+            final request = record.get('time') as Long
+            if( !realtime ) return null
+            if( !request ) return null
+            return realtime / request * 100 as Double
+        }
     }
+
+
 
     /**
      * Hold the summary for each series ie. cpu, memory, time, disk reads, disk writes
