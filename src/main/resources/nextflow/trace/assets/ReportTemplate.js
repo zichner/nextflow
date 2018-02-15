@@ -19,13 +19,29 @@ $(function() {
     $('#completed_fromnow').html('completed ' + completed_date.fromNow() + ', ');
   }
 
-  // Collect stats by process
-  for(i=0; i<window.data['trace'].length; i++){
-    var proc = window.data['trace'][i]['process']
+  // Collect metrics by process
+  for(proc in window.data['summary']){
     if(!window.data_byprocess.hasOwnProperty(proc)){
-      window.data_byprocess[proc] = [];
+      window.data_byprocess[proc] = {};
     }
-    window.data_byprocess[proc].push(window.data['trace'][i]);
+    var metrics = window.data['summary'][proc];
+    for (metric in metrics) {
+      if (metrics[metric] != null) {
+        window.data_byprocess[proc][metric] = [];
+        window.data_byprocess[proc][metric].push(metrics[metric].min);
+        window.data_byprocess[proc][metric].push(metrics[metric].q1);
+        window.data_byprocess[proc][metric].push(metrics[metric].q1);
+        window.data_byprocess[proc][metric].push(metrics[metric].q2);
+        window.data_byprocess[proc][metric].push(metrics[metric].q3);
+        window.data_byprocess[proc][metric].push(metrics[metric].q3);
+        window.data_byprocess[proc][metric].push(metrics[metric].max);
+        if (metric == "time") {
+          window.data_byprocess[proc][metric] = window.data_byprocess[proc][metric].map(function(d,i){
+            return moment.duration(d).asMinutes();
+          });
+        }
+      }
+    }
   }
 
   // Plot histograms of resource usage
@@ -35,36 +51,25 @@ $(function() {
   var pct_mem_used_data = [];
   var time_data = [];
   var pct_time_used_data = [];
-  var readwrite_data = [];
+  var read_data = [];
+  var write_data = [];
   var time_alloc_hasdata = false;
-  var readwrite_hasdata = false;
+  var read_hasdata = false;
+  var write_hasdata = false;
   for(var pname in window.data_byprocess){
     if (window.data_byprocess.hasOwnProperty(pname)) {
-      var rc = [];
-      var pc = [];
-      var rm = [];
-      var pm = [];
-      var rt = [];
-      var pt = [];
-      var rd = [];
-      for (var i = 0; i < window.data_byprocess[pname].length; i ++) {
-        rc[i] = xround(parseInt(window.data_byprocess[pname][i]['%cpu']));
-        pc[i] = xround((parseInt(window.data_byprocess[pname][i]['%cpu']) / (parseInt(window.data_byprocess[pname][i]['cpus']) * 100)) * 100);
-        rm[i] = xround(parseInt(window.data_byprocess[pname][i]['vmem']) / 1000000000);
-        pm[i] = xround((parseInt(window.data_byprocess[pname][i]['vmem']) / parseInt(window.data_byprocess[pname][i]['memory'])) * 100)
-        rt[i] = xround(moment.duration( parseInt(window.data_byprocess[pname][i]['realtime']) ).asMinutes());
-        pt[i] = xround((parseInt(window.data_byprocess[pname][i]['realtime']) / parseInt(window.data_byprocess[pname][i]['time'])) * 100)
-        rd[i] = xround((parseInt(window.data_byprocess[pname][i]['read_bytes']) + parseInt(window.data_byprocess[pname][i]['write_bytes'])) / 1000000000);
-        if (parseInt(window.data_byprocess[pname][i]['time']) > 0){ time_alloc_hasdata = true; }
-        if (rd[i] > 0){ readwrite_hasdata = true; }
-      }
-      cpu_data.push({y: rc, name: pname, type:'box', boxpoints: 'all', jitter: 0.3});
-      pct_cpu_used_data.push({y: pc, name: pname, type:'box', boxpoints: 'all', jitter: 0.3});
-      mem_data.push({y: rm, name: pname, type:'box', boxpoints: 'all', jitter: 0.3});
-      pct_mem_used_data.push({y: pm, name: pname, type:'box', boxpoints: 'all', jitter: 0.3});
-      time_data.push({y: rt, name: pname, type:'box', boxpoints: 'all', jitter: 0.3});
-      pct_time_used_data.push({y: pt, name: pname, type:'box', boxpoints: 'all', jitter: 0.3});
-      readwrite_data.push({y: rd, name: pname, type:'box', boxpoints: 'all', jitter: 0.3});
+      var smry = window.data_byprocess[pname];
+      if (smry.timeUsage != null){ time_alloc_hasdata = true; }
+      if (smry.reads != null){ read_hasdata = true; }
+      if (smry.writes != null){ write_hasdata = true; }
+      cpu_data.push({y: smry.cpu, name: pname, type:'box', jitter: 0.3});
+      pct_cpu_used_data.push({y: smry.cpuUsage, name: pname, type:'box', jitter: 0.3});
+      mem_data.push({y: smry.mem, name: pname, type:'box', jitter: 0.3});
+      pct_mem_used_data.push({y: smry.memUsage, name: pname, type:'box', jitter: 0.3});
+      time_data.push({y: smry.time, name: pname, type:'box', jitter: 0.3});
+      pct_time_used_data.push({y: smry.timeUsage, name: pname, type:'box', jitter: 0.3});
+      read_data.push({y: smry.reads, name: pname, type:'box', jitter: 0.3});
+      write_data.push({y: smry.writes, name: pname, type:'box', jitter: 0.3});
     }
   }
   Plotly.newPlot('pctcpuplot', pct_cpu_used_data, { title: '% Requested CPU Used', yaxis: {title: '% Allocated CPUs Used', range: [0, 100]} });
@@ -76,10 +81,21 @@ $(function() {
     $('#timeplot_header').after('<div id="timeplot"></div>');
     Plotly.newPlot('timeplot', time_data, { title: 'Task execution real-time', yaxis: {title: 'Execution time (minutes)'} });
   }
-  if(readwrite_hasdata){
-    Plotly.newPlot('readwriteplot', readwrite_data, { title: 'Disk Read+Write', yaxis: {title: 'Read bytes + write (gb)'} });
+  if(!read_hasdata && !write_hasdata) {
+    $('#readwriteplot_tabs, #readwriteplot_tabcontent').remove();
+    $('#readwriteplot_header').after('<div id="readwriteplot"></div>');
   } else {
-    $('#readwriteplot_div').hide();
+    if(read_hasdata){
+      Plotly.newPlot('readplot', read_data, { title: 'Number of bytes read from disk', yaxis: {title: 'Read bytes', tickformat: '.4s'} });
+      if (!write_hasdata) {
+        $('#writeplot_tabpanel').remove()
+      }
+    } else {
+      $('#readplot_tabpanel').remove()
+      if (write_hasdata) {
+        Plotly.newPlot('writeplot', write_data, { title: 'Number of bytes written to disk', yaxis: {title: 'Written bytes', tickformat: '.4s'}});
+      }
+    }
   }
   // Only plot tabbed plots when shown
   $('#cpuplot_tablink').on('shown.bs.tab', function (e) {
@@ -97,6 +113,12 @@ $(function() {
        Plotly.newPlot('timeplot', time_data, { title: 'Task execution real-time', yaxis: {title: 'Execution time (minutes)'} });
      }
   });
+
+  $('#writeplot_tablink').on('shown.bs.tab', function (e) {
+       if($('#writeplot').is(':empty')){
+           Plotly.newPlot('writeplot', write_data, { title: 'Number of bytes written to disk', yaxis: {title: 'Written bytes', tickformat: '.4s'}});
+       }
+    });
 
   // Humanize duration
   function humanize(duration){
