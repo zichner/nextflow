@@ -145,8 +145,6 @@ class ReportSummary {
 
         private int count
 
-        private Integer digits = 2
-
         @PackageScope Double min
 
         @PackageScope Double max
@@ -182,10 +180,7 @@ class ReportSummary {
         }
 
         private double round( double value ) {
-            if( digits == null )
-                return value
-            final x = Math.pow(10,digits)
-            Math.round( value * x ) / x
+            Math.round( value * 100 ) / 100
         }
 
         void add( TraceRecord record ) {
@@ -235,11 +230,16 @@ class ReportSummary {
             result.q2 = round(quantile(sorted, 50))
             result.q3 = round(quantile(sorted, 75))
             result.max = round(quantile(sorted, 100))
+            // discard entry with all zero 
+            if( result.min == 0 && result.min == result.max  )
+                return null
+
             result.minLabel = minLabel
             result.maxLabel = maxLabel
             result.q1Label = q1Label
             result.q2Label = q2Label
             result.q3Label = q3Label
+
             return result
         }
 
