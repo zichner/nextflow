@@ -131,6 +131,7 @@ configurations {
 dependencies {
     compile(project(':nxf-commons'))
     compile(project(':nxf-httpfs'))
+    compile(project(':picocli'))
     compile "org.codehaus.groovy:groovy:2.4.13"
     compile "org.codehaus.groovy:groovy-nio:2.4.13"
     compile "org.codehaus.groovy:groovy-json:2.4.13"

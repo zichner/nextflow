@@ -1,3 +1,6 @@
 [submodule "tests"]
 	path = tests
 	url = ../tests.git
+[submodule "subprojects/picocli"]
+	path = subprojects/picocli
+	url = git@github.com:nextflow-io/picocli.git
