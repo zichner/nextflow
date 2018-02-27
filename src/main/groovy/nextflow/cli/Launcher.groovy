@@ -104,7 +104,11 @@ class Launcher {
 
         for( Class<? extends CmdBase> clazz : commands) {
             def cmd = clazz.newInstance()
-            cmd.register(commandLine)
+            def cli = cmd.register(commandLine)
+            // allow the capture of any extra arguments after the first parameter (representing the project to run)
+            if( cmd instanceof CmdRun ) {
+                cli.setStopAtPositional(true)
+            }
         }
     }
 
@@ -117,9 +121,8 @@ class Launcher {
     Launcher parseMainArgs(String[] args) {
         this.cliString = System.getenv('NXF_CLI')
         this.colsString = System.getenv('COLUMNS')
-//        def cols = getColumns()
-//        if( cols )
-//            jcommander.setColumnSize(cols)
+        if( colsString )
+            System.setProperty('picocli.usage.width', colsString)
 
         normalizedArgs = normalizeArgs(args)
         this.parsedCommand = commandLine.parse(args).last()
@@ -147,20 +150,6 @@ class Launcher {
                 options.logFile = '.node-nextflow.log'
             else if( parsedCommand.command instanceof CmdRun || options.debug || options.trace )
                 options.logFile = ".nextflow.log"
-        }
-    }
-
-    private short getColumns() {
-        if( !colsString ) {
-            return 0
-        }
-
-        try {
-            colsString.toShort()
-        }
-        catch( Exception e ) {
-            log.debug "Oops .. not a valid \$COLUMNS value: $colsString"
-            return 0
         }
     }
 

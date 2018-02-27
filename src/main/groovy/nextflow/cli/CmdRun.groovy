@@ -31,7 +31,6 @@ import nextflow.Const
 import nextflow.config.ConfigBuilder
 import nextflow.exception.AbortOperationException
 import nextflow.file.FileHelper
-import nextflow.k8s.K8sDriverLauncher
 import nextflow.scm.AssetManager
 import nextflow.script.ScriptFile
 import nextflow.script.ScriptRunner
@@ -39,7 +38,6 @@ import nextflow.util.CustomPoolFactory
 import nextflow.util.Duration
 import nextflow.util.HistoryFile
 import org.yaml.snakeyaml.Yaml
-import picocli.CommandLine
 import picocli.CommandLine.Command
 import picocli.CommandLine.ITypeConverter
 import picocli.CommandLine.Option
@@ -98,7 +96,6 @@ class CmdRun extends CmdBase implements HubOptions {
 
     @Option(names=['-w', '--work-dir'], description = 'directory where intermediate result files are stored',arity = '1', paramLabel = "<work-dir>")
     String workDir
-
 
     @Option(names=['--params-file'], description = 'load script parameters from a JSON/YAML file',paramLabel = "<file-name>")
     String paramsFile
@@ -181,32 +178,19 @@ class CmdRun extends CmdBase implements HubOptions {
     /**
      * Defines the parameters to be passed to the pipeline script
      */
-    Map<String,String> params
+    @Parameters(index = '1', arity = '0..*', description = 'workflow parameters')
+    List<String> args
 
-    private CommandLine cli
-
-    @Override
-    protected CommandLine register(CommandLine parent) {
-        this.cli = super.register(parent)
-        cli.setUnmatchedArgumentsAllowed(true)
-        return cli
-    }
+    Map<String,?> params
 
     @Override
     void run() {
-        if( !test )
-            params = makeParams( cli.getUnmatchedArguments() )
+        this.params = !test ? makeParams(args) : Collections.<String,String>emptyMap()
 
         if( withDocker && withoutDocker )
             throw new AbortOperationException("Command line options `--with-docker` and `--without-docker` cannot be specified at the same time")
 
         checkRunName()
-
-        if( withKubernetes ) {
-            // that's another story
-            new K8sDriverLauncher(cmd: this, runName: runName).run(workflow)
-            return
-        }
 
         log.info "N E X T F L O W  ~  version ${Const.APP_VER}"
 
@@ -225,7 +209,7 @@ class CmdRun extends CmdBase implements HubOptions {
         runner.profile = profile
 
         if( this.test ) {
-            runner.test(this.test, cli.getUnmatchedArguments() )
+            runner.test(this.test, args )
             return
         }
 
@@ -338,6 +322,7 @@ class CmdRun extends CmdBase implements HubOptions {
 
         def result = [:]
 
+        // read the params file if any
         if( paramsFile ) {
             def path = validateParamsFile(paramsFile)
             def ext = path.extension.toLowerCase() ?: null
@@ -347,12 +332,8 @@ class CmdRun extends CmdBase implements HubOptions {
                 readYamlFile(path, result)
         }
 
-        // read the params file if any
-
         // set the CLI params
-        params?.each { key, value ->
-            result.put( key, parseParam(value) )
-        }
+        result.putAll(params)
         return result
     }
 
@@ -404,12 +385,12 @@ class CmdRun extends CmdBase implements HubOptions {
         }
     }
 
-    protected Map<String,String> makeParams(List<String> args) {
+    protected Map<String,?> makeParams(List<String> args) {
         if( args == null )
             return Collections.emptyMap()
-        
+
         List<String> normalise = new ArrayList<>(args.size()*2)
-        Map<String,String> result = [:]
+        Map<String,?> result = [:]
 
         for( String item : args ) {
             int p = item.indexOf('=')
@@ -422,23 +403,23 @@ class CmdRun extends CmdBase implements HubOptions {
             }
         }
 
-        String current=null
+        String key=null
         for( String item : normalise ) {
             if( item =~ /^--\w/ ) {
-                current = item.substring(2)
+                key = item.substring(2)
             }
-            else if( current ) {
-                result.put(current, item)
-//                def value = result.get(current)
-//                if( value==null ) {
-//                    result.put(current, item)
-//                }
-//                else if( value instanceof List ) {
-//                    value.add(item)
-//                }
-//                else {
-//                    result.put( current, [value, item] )
-//                }
+            else if( key ) {
+                final newValue = parseParam(item)
+                final current = result.get(key)
+                if( current==null ) {
+                    result.put(key, newValue)
+                }
+                else if( current instanceof List ) {
+                    current.add(newValue)
+                }
+                else {
+                    result.put( key, [current, newValue] )
+                }
             }
             else {
                 throw new IllegalArgumentException("Not a valid workflow parameter: $item")

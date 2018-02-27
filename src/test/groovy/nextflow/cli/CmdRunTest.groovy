@@ -35,6 +35,20 @@ class CmdRunTest extends Specification {
         result.foo == ['hello', 'world', 'ciao']
 
         when:
+        result = cmd.makeParams( ['--foo', 'hello', '--bar', '1'] )
+        then:
+        result.size()==2
+        result.foo == 'hello'
+        result.bar == 1
+
+        when:
+        result = cmd.makeParams( ['--foo', '1', '--bar', 'hello', '--foo', '2'] )
+        then:
+        result.size()==2
+        result.foo == [1, 2]
+        result.bar == 'hello'
+
+        when:
         cmd.makeParams(['foo','bar'])
         then:
         thrown(IllegalArgumentException)

@@ -314,14 +314,15 @@ class LauncherTest extends Specification {
     def 'should pass unknown parameters' () {
         given:
         def cmd = new CommandLine(new Sample())
-
+        cmd.setStopAtPositional(true)
+        
         when:
-        def sample = cmd.parse('--alpha', 'ciao', 'xx', '--yy').last().command as Sample
+        def sample = cmd.parse('--alpha', 'ciao', '--xx', '--yy').last().command as Sample
     
         then:
         sample.alpha
         sample.name == 'ciao'
-        sample.params == ['xx','--yy']
+        sample.params == ['--xx','--yy']
     }
 
 
