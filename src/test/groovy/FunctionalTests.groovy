@@ -66,30 +66,6 @@ class FunctionalTests extends Specification {
     }
 
 
-    /*
-     * test passing values through command line argument (unnamed parameters)
-     */
-    def 'test args'()  {
-
-        when:
-        def script = """
-            def len = args.size()
-            def x = args[0]
-            def y = args[1]
-
-            return [ x, y, len ]
-            """
-        def runner = new ScriptRunner()
-        def result = runner.setScript(script).execute(['hello', 'hola'] )
-
-        then:
-        result[0] == 'hello'
-        result[1] == 'hola'
-        result[2] == 2
-
-    }
-
-
     def 'test configure processor'() {
 
         setup:

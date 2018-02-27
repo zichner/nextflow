@@ -147,7 +147,7 @@ class ScriptRunner {
      * @return The result as returned by the {@code #run} method
      */
 
-    def execute( ) {
+    def execute() {
         assert scriptText
 
         // init session

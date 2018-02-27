@@ -147,6 +147,17 @@ class LauncherTest extends Specification {
 
     }
 
+    def 'should return run default run options' () {
+        given:
+        CmdRun cmd
+
+        when:
+        cmd = new Launcher() .parseMainArgs('run', '--with-docker', '-' ,'foo') .command
+        then:
+        cmd.withDocker == '-'
+        cmd.workflow == 'foo'
+    }
+
 
     def 'should normalise command line options' () {
 
@@ -317,12 +328,12 @@ class LauncherTest extends Specification {
         cmd.setStopAtPositional(true)
         
         when:
-        def sample = cmd.parse('--alpha', 'ciao', '--xx', '--yy').last().command as Sample
+        def sample = cmd.parse('--alpha', 'ciao', 'xx', '--yy').last().command as Sample
     
         then:
         sample.alpha
         sample.name == 'ciao'
-        sample.params == ['--xx','--yy']
+        sample.params == ['xx','--yy']
     }
 
 

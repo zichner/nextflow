@@ -34,6 +34,10 @@ import nextflow.file.FileHelper
 import nextflow.scm.AssetManager
 import nextflow.script.ScriptFile
 import nextflow.script.ScriptRunner
+import nextflow.trace.GraphObserver
+import nextflow.trace.ReportObserver
+import nextflow.trace.TimelineObserver
+import nextflow.trace.TraceFileObserver
 import nextflow.util.CustomPoolFactory
 import nextflow.util.Duration
 import nextflow.util.HistoryFile
@@ -91,7 +95,7 @@ class CmdRun extends CmdBase implements HubOptions {
     @Option(names=['--qs','--queue-size'], description = 'max number of processes that can be executed in parallel by each executor', paramLabel = "<n>")
     Integer queueSize
 
-    @Option(names=['--test'], description = 'test a script function with the name specified', paramLabel = "<function-name>")
+    @Option(names=['--test'], description = 'test a script function with the name specified', paramLabel = "<function-name>", implicit = '%all')
     String test
 
     @Option(names=['-w', '--work-dir'], description = 'directory where intermediate result files are stored',arity = '1', paramLabel = "<work-dir>")
@@ -124,19 +128,19 @@ class CmdRun extends CmdBase implements HubOptions {
     @Option(names = ['--with-drmaa'], description = 'enable DRMAA binding')
     String withDrmaa
 
-    @Option(names = ['--with-trace'], description = 'create processes execution tracing file')
+    @Option(names = ['--with-trace'], description = 'create processes execution tracing file', implicit = TraceFileObserver.DEF_FILE_NAME)
     String withTrace
 
-    @Option(names = ['--with-report'], description = 'create processes execution html report')
+    @Option(names = ['--with-report'], description = 'create processes execution html report', implicit = ReportObserver.DEF_FILE_NAME)
     String withReport
 
-    @Option(names = ['--with-timeline'], description = 'create processes execution timeline file')
+    @Option(names = ['--with-timeline'], description = 'create processes execution timeline file', implicit = TimelineObserver.DEF_FILE_NAME)
     String withTimeline
 
-    @Option(names = ['--with-singularity'], description = 'enable process execution in a Singularity container')
+    @Option(names = ['--with-singularity'], description = 'enable process execution in a Singularity container', implicit = '-')
     def withSingularity
 
-    @Option(names = ['--with-docker'], description = 'enable process execution in a Docker container')
+    @Option(names = ['--with-docker'], description = 'enable process execution in a Docker container', implicit = '-')
     def withDocker
 
     @Option(names = ['--without-docker'], description = 'disable process execution with Docker', arity = '0')
@@ -148,7 +152,7 @@ class CmdRun extends CmdBase implements HubOptions {
     @Option(names = ['--with-mpi'], hidden = true)
     boolean withMpi
 
-    @Option(names = ['--with-dag'], description = 'create pipeline DAG file')
+    @Option(names = ['--with-dag'], description = 'create pipeline DAG file', implicit = GraphObserver.DEF_FILE_NAME)
     String withDag
 
     @Option(names = ['--bg'], arity = '0', description = 'launch the execution in background')
@@ -166,10 +170,10 @@ class CmdRun extends CmdBase implements HubOptions {
     @Option(names=['--dump-hashes'], description = 'dump task hash keys for debugging purpose')
     boolean dumpHashes
 
-    @Option(names=['--dump-channels'], description = 'dump channels for debugging purpose', paramLabel = "<channel-names>")
+    @Option(names=['--dump-channels'], description = 'dump channels for debugging purpose', paramLabel = "<channel-names>", implicit = '*')
     String dumpChannels
 
-    @Option(names=['-N','--with-notification'], description = 'send a notification email on workflow completion to the specified recipients', paramLabel = "<email-address>")
+    @Option(names=['-N','--with-notification'], description = 'send a notification email on workflow completion to the specified recipients', paramLabel = "<email-address>", implicit = 'true')
     String withNotification
 
     @Parameters(index = '0', arity = '1', description = 'workflow to execute, either a script file or a project repository')

@@ -28,10 +28,6 @@ import groovy.util.logging.Slf4j
 import nextflow.exception.AbortOperationException
 import nextflow.exception.AbortRunException
 import nextflow.exception.ConfigParseException
-import nextflow.trace.GraphObserver
-import nextflow.trace.ReportObserver
-import nextflow.trace.TimelineObserver
-import nextflow.trace.TraceFileObserver
 import nextflow.util.LoggerHelper
 import org.codehaus.groovy.control.CompilationFailedException
 import org.eclipse.jgit.api.errors.GitAPIException
@@ -187,53 +183,6 @@ class Launcher {
                 else {
                     normalized << 'last'
                 }
-            }
-            else if( current == '--test' && (i==args.size() || args[i].startsWith('-'))) {
-                normalized << '%all'
-            }
-
-            else if( current == '--with-drmaa' && (i==args.size() || args[i].startsWith('-'))) {
-                normalized << '-'
-            }
-
-            else if( current == '--with-trace' && (i==args.size() || args[i].startsWith('-'))) {
-                normalized << TraceFileObserver.DEF_FILE_NAME
-            }
-
-            else if( current == '--with-report' && (i==args.size() || args[i].startsWith('-'))) {
-                normalized << ReportObserver.DEF_FILE_NAME
-            }
-
-            else if( current == '--with-timeline' && (i==args.size() || args[i].startsWith('-'))) {
-                normalized << TimelineObserver.DEF_FILE_NAME
-            }
-
-            else if( current == '--with-dag' && (i==args.size() || args[i].startsWith('-'))) {
-                normalized << GraphObserver.DEF_FILE_NAME
-            }
-
-            else if( current == '--with-docker' && (i==args.size() || args[i].startsWith('-'))) {
-                normalized << '-'
-            }
-
-            else if( current == '--with-singularity' && (i==args.size() || args[i].startsWith('-'))) {
-                normalized << '-'
-            }
-
-            else if( (current == '-N' || current == '--with-notification') && (i==args.size() || args[i].startsWith('-'))) {
-                normalized << 'true'
-            }
-
-            else if( (current == '-K' || current == '--with-k8s') && (i==args.size() || args[i].startsWith('-'))) {
-                normalized << 'true'
-            }
-
-            else if( current == '--syslog' && (i==args.size() || args[i].startsWith('-') || allCommands.find { it.name == args[i] } )) {
-                normalized << 'localhost'
-            }
-
-            else if( current == '--dump-channels' && (i==args.size() || args[i].startsWith('-'))) {
-                normalized << '*'
             }
 
 //            else if( current ==~ /^\-\-[a-zA-Z\d].*/ && !current.contains('=') ) {
